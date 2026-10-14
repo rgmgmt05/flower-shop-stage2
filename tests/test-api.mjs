@@ -34,6 +34,10 @@ async function req(path, method='GET', data=null, key=true){
 assert.equal((await req('/api/catalog','GET',null,false)).data.products.length,6);
 assert.equal((await req('/api/admin/state','GET',null,false)).status,403);
 assert.equal((await req('/api/demo/orders','POST',{lines:[]},false)).status,401);
+const staff=await req('/api/auth/register','POST',{email:'staff@example.invalid',displayName:'テスト店員',role:'staff',password:'demo-passphrase-long'});
+assert.equal(staff.status,200,JSON.stringify(staff));
+staffCookie=staff.cookie.split(';')[0];
+assert.equal((await req('/api/auth/me')).data.user.role,'staff');
 const start=(await req('/api/admin/state')).data;
 assert.equal(start.products.find(p=>p.id==='rose-r').stock,18);
 const cart={name:'試験用',contact:'example.invalid',pickup:'2026-11-01',total:1,lines:[{kind:'single',id:'rose-r',qty:1},{kind:'bouquet',parts:[{id:'rose-r',qty:3}],wrapId:'natural'}]};
