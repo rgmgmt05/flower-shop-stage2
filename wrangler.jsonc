@@ -14,7 +14,7 @@
     {
       "binding": "DB",
       "database_name": "flower-shop-demo",
-      "database_id": "00000000-0000-4000-8000-000000000000",
+      "database_id": "983e19d7-b9a7-44cf-8f3f-dd6e483b9a31",
       "migrations_dir": "migrations"
     }
   ],
