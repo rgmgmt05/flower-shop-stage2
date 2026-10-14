@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import worker from '../src/worker.js';
 
 class MockDB {
- constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'))}
+ constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0003_completed_bouquets.sql',import.meta.url),'utf8'))}
  prepare(sql){
   const instance=this.db;
   function bound(params=[]){return {
@@ -86,3 +86,41 @@ assert.equal((await req('/api/admin/templates','POST',{name:'wrong',imageId,wrap
 const wrongMime=await worker.fetch(new Request('https://demo.example/api/admin/media',{method:'POST',headers:{'x-demo-key':env.DEMO_KEY,'content-type':'image/svg+xml'},body:'<svg/>',}),env);
 assert.equal(wrongMime.status,400);
 console.log('PASS: R2画像保存・公開、花材画像の更新、完成花束の実例登録と在庫非連動');
+
+// Completing an order with multiple bouquets must register every finished
+// bouquet, keep the inventory unchanged, and prevent duplicate completion.
+const bouquetOrder=await req('/api/demo/orders','POST',{
+ name:'完成デモ',contact:'flower.invalid',pickup:'2026-11-02',lines:[
+  {kind:'single',id:'tulip',qty:1},
+  {kind:'bouquet',parts:[{id:'tulip',qty:2}],wrapId:'white'},
+  {kind:'bouquet',parts:[{id:'gerbera',qty:3}],wrapId:'natural'}
+ ]});
+assert.equal(bouquetOrder.status,201,JSON.stringify(bouquetOrder));
+const completedId=bouquetOrder.data.id;
+assert.equal((await req('/api/admin/orders/'+completedId+'/status','PATCH',{status:'producing'})).status,200);
+const beforeDone=(await req('/api/catalog','GET',null,false)).data;
+assert.equal((await req('/api/admin/orders/'+completedId+'/status','PATCH',{status:'done'})).status,400);
+assert.equal((await req('/api/admin/state')).data.orders.find(o=>o.id===completedId).status,'producing');
+const completed=await req('/api/admin/orders/'+completedId+'/status','PATCH',{
+ status:'done',photos:[{lineIndex:1,imageId},{lineIndex:2,imageId}]
+});
+assert.equal(completed.status,200,JSON.stringify(completed));
+assert.equal(completed.data.templatesCreated,2);
+const afterDone=(await req('/api/catalog','GET',null,false)).data;
+assert.equal(afterDone.templates.length,beforeDone.templates.length+2);
+assert.equal(afterDone.templates.filter(t=>t.name.startsWith('完成花束 ')).length,2);
+assert.equal(afterDone.templates.find(t=>t.name.endsWith('#1')).parts[0].qty,2);
+assert.equal(afterDone.products.find(p=>p.id==='gerbera').stock,beforeDone.products.find(p=>p.id==='gerbera').stock);
+assert.equal((await req('/api/admin/orders/'+completedId+'/status','PATCH',{
+ status:'done',photos:[{lineIndex:1,imageId},{lineIndex:2,imageId}]
+})).status,409);
+assert.equal((await req('/api/catalog','GET',null,false)).data.templates.length,afterDone.templates.length);
+const singleOnly=await req('/api/demo/orders','POST',{
+ name:'単品だけ',contact:'demo.invalid',lines:[{kind:'single',id:'tulip',qty:1}]
+});
+assert.equal(singleOnly.status,201);
+assert.equal((await req('/api/admin/orders/'+singleOnly.data.id+'/status','PATCH',{status:'producing'})).status,200);
+const noPhoto=await req('/api/admin/orders/'+singleOnly.data.id+'/status','PATCH',{status:'done'});
+assert.equal(noPhoto.status,200);
+assert.equal(noPhoto.data.templatesCreated,0);
+console.log('PASS: 注文完成時の写真必須・花束ごとの自動登録・重複防止・単品注文完了');
