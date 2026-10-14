@@ -1,0 +1,13 @@
+{
+  "name":"flower-shop-stage2",
+  "private":true,
+  "version":"0.2.0",
+  "type":"module",
+  "scripts":{
+    "dev":"wrangler dev",
+    "db:local":"wrangler d1 migrations apply flower-shop-demo --local",
+    "db:remote":"wrangler d1 migrations apply flower-shop-demo --remote",
+    "deploy":"wrangler deploy"
+  },
+  "devDependencies":{"wrangler":"^4.0.0"}
+}
