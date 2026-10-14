@@ -70,7 +70,7 @@ console.log('PASS: API認証、商品・在庫、原価付き仕入れ、店頭�
 
 // Product imagery + reusable bouquet template, with R2 stored media.
 const jpg=new Uint8Array([0xff,0xd8,0xff,0xe0,1,2,3,0xff,0xd9]);
-const imageResp=await worker.fetch(new Request('https://demo.example/api/admin/media',{method:'POST',headers:{'x-demo-key':env.DEMO_KEY,'content-type':'image/jpeg'},body:jpg}),env);
+const imageResp=await worker.fetch(new Request('https://demo.example/api/admin/media',{method:'POST',headers:{'x-demo-key':env.DEMO_KEY,'cookie':staffCookie,'content-type':'image/jpeg'},body:jpg}),env);
 assert.equal(imageResp.status,201);
 const imageId=(await imageResp.json()).id;
 assert.ok(imageId);
@@ -88,7 +88,7 @@ assert.equal(templates[0].parts[0].qty,2);
 assert.equal(templates[0].imageId,imageId);
 assert.equal((await req('/api/admin/state')).data.products.find(p=>p.id==='rose-r').stock,20,'実例登録は在庫を減らさない');
 assert.equal((await req('/api/admin/templates','POST',{name:'wrong',imageId,wrapId:'white',parts:[{id:'invalid',qty:1}]})).status,400);
-const wrongMime=await worker.fetch(new Request('https://demo.example/api/admin/media',{method:'POST',headers:{'x-demo-key':env.DEMO_KEY,'content-type':'image/svg+xml'},body:'<svg/>',}),env);
+const wrongMime=await worker.fetch(new Request('https://demo.example/api/admin/media',{method:'POST',headers:{'x-demo-key':env.DEMO_KEY,'cookie':staffCookie,'content-type':'image/svg+xml'},body:'<svg/>',}),env);
 assert.equal(wrongMime.status,400);
 console.log('PASS: R2画像保存・公開、花材画像の更新、完成花束の実例登録と在庫非連動');
 
