@@ -14,6 +14,82 @@ async function sameSecret(a,b) {
 async function requireDemo(request,env) {
   if (!env.DEMO_KEY || !(await sameSecret(request.headers.get('x-demo-key'), env.DEMO_KEY))) throw Object.assign(new Error('体験用キーが必要です'),{status:401});
 }
+// Stage 3A demo account authentication. Registration requires the private demo invitation key.
+// Real customer sign-ups require email verification, abuse protection, password reset,
+// operational privacy safeguards, and a payment provider before production.
+const SESSION_COOKIE='__Host-flower_session';
+const SEVEN_DAYS=604800;
+const PWD_ROUNDS=120000;
+function authError(message='ログインしてください',status=401){return Object.assign(new Error(message),{status})}
+const fromHex=hex=>new Uint8Array(hex.match(/../g).map(x=>parseInt(x,16)));
+const toHex=bytes=>Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
+async function digestHex(input){return toHex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(input)))}
+async function passwordHash(password,salt){
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
+  return toHex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:fromHex(salt),iterations:PWD_ROUNDS},key,256));
+}
+function sessionToken(){return Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('')}
+function sessionResponse(data,token=null,status=200){
+  const h=new Headers(headers);
+  if(token!==null)h.set('Set-Cookie',SESSION_COOKIE+'='+token+'; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age='+SEVEN_DAYS);
+  return new Response(JSON.stringify(data),{status,headers:h});
+}
+function publicAccount(a){return a?{id:a.id,email:a.email,displayName:a.display_name,role:a.role}:null}
+async function actorFor(request,db){
+  const cookie=request.headers.get('cookie')||'';
+  const token=cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(SESSION_COOKIE+'='))?.slice(SESSION_COOKIE.length+1);
+  if(!token||!/^[a-f0-9]{64}$/.test(token))return null;
+  return await db.prepare('SELECT a.id,a.email,a.display_name,a.role FROM auth_sessions s JOIN accounts a ON a.id=s.account_id WHERE s.session_hash=? AND s.expires_at>?')
+    .bind(await digestHex(token),Math.floor(Date.now()/1000)).first();
+}
+async function issueSession(db,account){
+ const token=sessionToken(),now=Math.floor(Date.now()/1000);
+ await db.prepare('INSERT INTO auth_sessions(session_hash,account_id,expires_at) VALUES(?,?,?)').bind(await digestHex(token),account.id,now+SEVEN_DAYS).run();
+ return sessionResponse({user:publicAccount(account)},token);
+}
+async function registerAccount(request,env){
+  await requireDemo(request,env);
+  const v=await input(request);
+  const email=String(v?.email||'').trim().toLowerCase();
+  const displayName=String(v?.displayName||'').trim(),password=String(v?.password||'');
+  const role=v?.role;
+  if(!/^[^\s@]{1,64}@[^\s@]{1,128}\.[^\s@]{2,24}$/.test(email)||!displayName||displayName.length>60||!['staff','customer'].includes(role)
+   ||password.length<12||password.length>128)throw new Error('メール形式・表示名・役割・12文字以上のパスワードを確認してください');
+  const count=await env.DB.prepare('SELECT count(*) AS n FROM accounts').first();
+  if(count.n>=30)throw authError('デモのアカウント登録上限です',409);
+  const salt=toHex(crypto.getRandomValues(new Uint8Array(16))),id=crypto.randomUUID(),ph=await passwordHash(password,salt);
+  try{await env.DB.prepare('INSERT INTO accounts(id,email,display_name,role,salt,password_hash) VALUES(?,?,?,?,?,?)')
+   .bind(id,email,displayName,role,salt,ph).run()}
+  catch(e){if(/UNIQUE/i.test(e.message))throw authError('このメールアドレスは登録済みです',409);throw e}
+  return issueSession(env.DB,{id,email,display_name:displayName,role});
+}
+async function loginAccount(request,env){
+ const v=await input(request),email=String(v?.email||'').trim().toLowerCase(),pwd=String(v?.password||'');
+ if(email.length>240||pwd.length>128||!email||!pwd)throw authError('認証情報を確認してください');
+ const a=await env.DB.prepare('SELECT * FROM accounts WHERE email=?').bind(email).first();
+ if(!a)throw authError('メールアドレスかパスワードが違います');
+ const now=Math.floor(Date.now()/1000);
+ if(a.locked_until>now)throw authError('ログイン試行が多いため、時間をおいてください',429);
+ const got=await passwordHash(pwd,a.salt);
+ if(!(await sameSecret(got,a.password_hash))){
+  await env.DB.prepare('UPDATE accounts SET failed_attempts=failed_attempts+1,locked_until=CASE WHEN failed_attempts>=4 THEN ? ELSE 0 END WHERE id=?').bind(now+900,a.id).run();
+  throw authError('メールアドレスかパスワードが違います');
+ }
+ await env.DB.prepare('UPDATE accounts SET failed_attempts=0,locked_until=0 WHERE id=?').bind(a.id).run();
+ return issueSession(env.DB,a);
+}
+async function logoutAccount(request,db){
+ const cookie=request.headers.get('cookie')||'';
+ const token=cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(SESSION_COOKIE+'='))?.slice(SESSION_COOKIE.length+1);
+ if(token&&/^[a-f0-9]{64}$/.test(token))await db.prepare('DELETE FROM auth_sessions WHERE session_hash=?').bind(await digestHex(token)).run();
+ const h=new Headers(headers);h.set('Set-Cookie',SESSION_COOKIE+'=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+ return new Response(JSON.stringify({ok:true}),{headers:h});
+}
+async function accountOrders(db,accountId){
+ const {results}=await db.prepare('SELECT id,created_at AS createdAt,status,total,payment,pickup,snapshots_json AS snapshotsJson FROM orders WHERE customer_id=? ORDER BY created_at DESC,rowid DESC LIMIT 100').bind(accountId).all();
+ return {orders:results.map(o=>({id:o.id,createdAt:o.createdAt,status:o.status,total:o.total,payment:o.payment,pickup:o.pickup,items:JSON.parse(o.snapshotsJson)}))};
+}
+
 async function input(request) {
   const text=await request.text();
   if(text.length>32768)throw Object.assign(new Error('送信データが大きすぎます'),{status:413});
@@ -60,7 +136,7 @@ function normalizeLine(line,byId,byWrap) {
   }
   throw new Error('商品種別を確認してください');
 }
-async function demoCheckout(db,body) {
+async function demoCheckout(db,body,customerId=null) {
   if(!body||!Array.isArray(body.lines)||body.lines.length===0||body.lines.length>40)throw new Error('カートを確認してください');
   const name=String(body.name||'').trim(),contact=String(body.contact||'').trim(),pickup=String(body.pickup||'');
   if(!name||!contact||name.length>100||contact.length>100||pickup.length>30)throw new Error('テスト用の注文者情報を確認してください');
@@ -72,7 +148,7 @@ async function demoCheckout(db,body) {
   const total=calculated.reduce((s,l)=>s+l.snapshot.total,0);
   if(!isInt(total,0,10000000))throw new Error('合計金額を確認してください');
   const id=crypto.randomUUID();
-  const stmts=[db.prepare('INSERT INTO orders(id,name,contact,pickup,total,lines_json,snapshots_json) VALUES(?,?,?,?,?,?,?)').bind(id,name,contact,pickup,total,JSON.stringify(body.lines),JSON.stringify(calculated.map(l=>l.snapshot)))];
+  const stmts=[db.prepare('INSERT INTO orders(id,name,contact,pickup,total,lines_json,snapshots_json,customer_id) VALUES(?,?,?,?,?,?,?,?)').bind(id,name,contact,pickup,total,JSON.stringify(body.lines),JSON.stringify(calculated.map(l=>l.snapshot)),customerId)];
   for(const [pid,qty] of demand){
     stmts.push(db.prepare('INSERT INTO order_demand(order_id,product_id,qty) VALUES(?,?,?)').bind(id,pid,qty));
     // SQLite stock CHECK rejects negative values and rolls back the entire D1 batch.
@@ -219,12 +295,29 @@ export default {
       if(path==='/api/catalog'&&request.method==='GET')return response(await catalog(env.DB));
       const mediaMatch=path.match(/^\/api\/media\/([^/]+)$/);
       if(mediaMatch&&request.method==='GET')return await serveMedia(mediaMatch[1],env);
-      // Entire stage-2 write/admin API is behind DEMO_KEY. No public customer checkout yet.
-      await requireDemo(request,env);
+      if(!['GET','HEAD'].includes(request.method)){
+        const origin=request.headers.get('origin');
+        if(origin&&origin!==url.origin)return fail('不正なアクセス元です',403);
+      }
+      if(path==='/api/auth/register'&&request.method==='POST')return await registerAccount(request,env);
+      if(path==='/api/auth/login'&&request.method==='POST')return await loginAccount(request,env);
+      if(path==='/api/auth/logout'&&request.method==='POST')return await logoutAccount(request,env.DB);
+      const actor=await actorFor(request,env.DB);
+      if(path==='/api/auth/me'&&request.method==='GET')return response({user:publicAccount(actor)});
+      if(path==='/api/account/orders'&&request.method==='GET'){
+        if(!actor)throw authError();
+        return response(await accountOrders(env.DB,actor.id));
+      }
+      if(path==='/api/demo/orders'&&request.method==='POST'){
+        if(!actor)await requireDemo(request,env); // Guest checkout is invitation-only during the demo.
+        return response(await demoCheckout(env.DB,await input(request),actor?.role==='customer'?actor.id:null),201);
+      }
+      // Only individual staff sessions may use stock, media, and order management.
+      if(actor?.role!=='staff')throw authError('スタッフのログインが必要です',403);
       if(path==='/api/admin/state'&&request.method==='GET')return response(await adminState(env.DB));
       if(path==='/api/admin/media'&&request.method==='POST')return response(await uploadMedia(request,env),201);
       if(path==='/api/admin/templates'&&request.method==='POST')return response(await saveTemplate(env.DB,await input(request)),201);
-      if(path==='/api/demo/orders'&&request.method==='POST')return response(await demoCheckout(env.DB,await input(request)),201);
+
       if(path==='/api/admin/products'&&request.method==='POST')return response(await createProduct(env.DB,await input(request)),201);
       const productMatch=path.match(/^\/api\/admin\/products\/([^/]+)$/);
       if(productMatch&&request.method==='PATCH')return response(await updateProduct(env.DB,decodeURIComponent(productMatch[1]),await input(request)));
