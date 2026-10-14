@@ -86,8 +86,8 @@ async function logoutAccount(request,db){
  return new Response(JSON.stringify({ok:true}),{headers:h});
 }
 async function accountOrders(db,accountId){
- const {results}=await db.prepare('SELECT id,created_at AS createdAt,status,total,payment,pickup,snapshots_json AS snapshotsJson FROM orders WHERE customer_id=? ORDER BY created_at DESC,rowid DESC LIMIT 100').bind(accountId).all();
- return {orders:results.map(o=>({id:o.id,createdAt:o.createdAt,status:o.status,total:o.total,payment:o.payment,pickup:o.pickup,items:JSON.parse(o.snapshotsJson)}))};
+ const {results}=await db.prepare('SELECT id,created_at AS createdAt,status,total,payment,pickup,fulfillment_method AS fulfillmentMethod,handed_over_at AS handedOverAt,snapshots_json AS snapshotsJson FROM orders WHERE customer_id=? ORDER BY created_at DESC,rowid DESC LIMIT 100').bind(accountId).all();
+ return {orders:results.map(o=>({id:o.id,createdAt:o.createdAt,status:o.status,total:o.total,payment:o.payment,pickup:o.pickup,fulfillmentMethod:o.fulfillmentMethod,handedOverAt:o.handedOverAt,items:JSON.parse(o.snapshotsJson)}))};
 }
 
 async function input(request) {
@@ -110,7 +110,7 @@ async function adminState(db){
     db.prepare('SELECT * FROM orders ORDER BY created_at DESC, rowid DESC LIMIT 200').all(),
     db.prepare('SELECT id,product_id AS productId,delta,reason,unit_cost AS unitCost,order_id AS orderId,created_at AS date FROM movements ORDER BY id DESC LIMIT 100').all()
   ]);
-  return {...c,orders:os.results.map(o=>({id:o.id,createdAt:o.created_at,name:o.name,contact:o.contact,pickup:o.pickup,status:o.status,payment:o.payment,total:o.total,lines:JSON.parse(o.lines_json),itemSnapshots:JSON.parse(o.snapshots_json)})),movements:ms.results};
+  return {...c,orders:os.results.map(o=>({id:o.id,createdAt:o.created_at,name:o.name,contact:o.contact,pickup:o.pickup,fulfillmentMethod:o.fulfillment_method,handedOverAt:o.handed_over_at,status:o.status,payment:o.payment,total:o.total,lines:JSON.parse(o.lines_json),itemSnapshots:JSON.parse(o.snapshots_json)})),movements:ms.results};
 }
 function normalizeLine(line,byId,byWrap) {
   if(!line||typeof line!=='object') throw new Error('商品を確認してください');
@@ -138,7 +138,8 @@ function normalizeLine(line,byId,byWrap) {
 }
 async function demoCheckout(db,body,customerId=null) {
   if(!body||!Array.isArray(body.lines)||body.lines.length===0||body.lines.length>40)throw new Error('カートを確認してください');
-  const name=String(body.name||'').trim(),contact=String(body.contact||'').trim(),pickup=String(body.pickup||'');
+  const name=String(body.name||'').trim(),contact=String(body.contact||'').trim(),pickup=String(body.pickup||''),fulfillment=body.fulfillmentMethod||'pickup';
+  if(fulfillment!=='pickup')throw new Error('現在のテスト注文は店頭受取のみです');
   if(!name||!contact||name.length>100||contact.length>100||pickup.length>30)throw new Error('テスト用の注文者情報を確認してください');
   const c=await catalog(db),byId=new Map(c.products.map(p=>[p.id,p])),byWrap=new Map(c.wraps.map(w=>[w.id,w]));
   const calculated=body.lines.map(l=>normalizeLine(l,byId,byWrap));
@@ -148,7 +149,7 @@ async function demoCheckout(db,body,customerId=null) {
   const total=calculated.reduce((s,l)=>s+l.snapshot.total,0);
   if(!isInt(total,0,10000000))throw new Error('合計金額を確認してください');
   const id=crypto.randomUUID();
-  const stmts=[db.prepare('INSERT INTO orders(id,name,contact,pickup,total,lines_json,snapshots_json,customer_id) VALUES(?,?,?,?,?,?,?,?)').bind(id,name,contact,pickup,total,JSON.stringify(body.lines),JSON.stringify(calculated.map(l=>l.snapshot)),customerId)];
+  const stmts=[db.prepare('INSERT INTO orders(id,name,contact,pickup,total,lines_json,snapshots_json,customer_id,fulfillment_method) VALUES(?,?,?,?,?,?,?,?,?)').bind(id,name,contact,pickup,total,JSON.stringify(body.lines),JSON.stringify(calculated.map(l=>l.snapshot)),customerId,fulfillment)];
   for(const [pid,qty] of demand){
     stmts.push(db.prepare('INSERT INTO order_demand(order_id,product_id,qty) VALUES(?,?,?)').bind(id,pid,qty));
     // SQLite stock CHECK rejects negative values and rolls back the entire D1 batch.
@@ -190,6 +191,11 @@ async function changeStock(db,v){
     db.prepare('INSERT INTO movements(product_id,delta,reason,unit_cost) VALUES(?,?,?,?)').bind(id,delta,reason,reason==='仕入れ'?unitCost:null)
   ]);
   return {ok:true};
+}
+async function handOver(db,id){
+ const r=await db.prepare("UPDATE orders SET handed_over_at=CURRENT_TIMESTAMP WHERE id=? AND status='done' AND handed_over_at IS NULL").bind(id).run();
+ if(r.meta?.changes!==1)throw authError('完了済み・未引渡しの注文を選んでください',409);
+ return {ok:true};
 }
 async function setStatus(db,id,status){
   if(!['producing','canceled'].includes(status))throw new Error('注文状態を確認してください');
@@ -322,6 +328,8 @@ export default {
       const productMatch=path.match(/^\/api\/admin\/products\/([^/]+)$/);
       if(productMatch&&request.method==='PATCH')return response(await updateProduct(env.DB,decodeURIComponent(productMatch[1]),await input(request)));
       if(path==='/api/admin/movements'&&request.method==='POST')return response(await changeStock(env.DB,await input(request)),201);
+      const handOverMatch=path.match(/^\/api\/admin\/orders\/([^/]+)\/handover$/);
+      if(handOverMatch&&request.method==='POST')return response(await handOver(env.DB,decodeURIComponent(handOverMatch[1])));
       const orderMatch=path.match(/^\/api\/admin\/orders\/([^/]+)\/status$/);
       if(orderMatch&&request.method==='PATCH'){
         const body=await input(request),orderId=decodeURIComponent(orderMatch[1]);
