@@ -1,4 +1,4 @@
-# 切り花店 EC + 在庫管理（Stage 2 / 共有デモ）
+# 切り花店 EC + 在庫管理（Stage 2.1 / 写真・花束実例デモ）
 
 前回のHTMLデモを、**Cloudflare Workers + D1 (SQLite)** に対応させた版。既存UIを再利用し、React等への書き直しは行っていない。プレビューを早く確認するための構成。
 
@@ -10,20 +10,23 @@
 - 商品登録、価格変更、商品公開切替、仕入れ、店頭販売、廃棄・調整
 - スマホ・タブレット・PCの複数ブラウザから同じ商品・在庫・注文を参照
 - 注文取消時の在庫復元、重複取消防止
+- 仕入れや商品登録時の撮影・写真の保存（R2）
+- 完成した花束の写真・花材・本数・包装を実例として登録
+- 顧客が実例から花束を呼び出してカスタマイズ
 - 注文時の価格再計算、在庫不足時の全処理ロールバック
 
-> **本番環境ではない**：決済、正規スタッフアカウント、注文通知、写真アップロード、個人情報保護の運用は未対応。実在の顧客情報を入力しないこと。一般顧客向けの注文受付には使用しないこと。
+> **本番環境ではない**：決済、正規スタッフアカウント、注文通知、個人情報保護の運用は未対応。実在の顧客情報を入力しないこと。一般顧客向けの注文受付には使用しないこと。
 
 ## 事前準備
 
-- PCにNode.js 20以上とnpm
+- PCにNode.js 22以上とnpm
 - Cloudflareの無料アカウント（リモート公開時）
 - ターミナル（macOS / Windows PowerShell / Linux）
 
 ## 1. PC内で動かす
 
 ```bash
-cd flower_shop_stage2
+cd flower_shop_stage2_images
 npm install
 cp .dev.vars.example .dev.vars
 # .dev.vars をエディタで開き、DEMO_KEY の値を任意の長いキーに変更
@@ -42,7 +45,10 @@ Windows PowerShellの場合は `cp` を `Copy-Item` に置き換えられる。
 ```bash
 npx wrangler login
 npx wrangler d1 create flower-shop-demo
+npx wrangler r2 bucket create flower-shop-photos
 ```
+
+データベースをCloudflareの画面から作成済みなら再作成は不要です。R2を初めて利用するときはサブスクリプションの有効化（課金情報登録）が必要になる場合があります。
 
 表示される `database_id` を **wrangler.jsonc** 内の `database_id`（最初は `00000000-0000-4000-8000-000000000000`）へ貼り付ける。
 
@@ -74,7 +80,8 @@ npx wrangler secret put DEMO_KEY
 - `public/index.html`：既存HTML UIをAPI接続に変更したもの。単独で開いてもAPIがないため動作しない。
 - `src/worker.js`：Cloudflare Workers API（追加依存なし）
 - `migrations/0001_init.sql`：D1テーブルと仮商品、取消時の在庫復元トリガー
-- `wrangler.jsonc`：Workers + D1の接続設定
+- `migrations/0002_images_bouquets.sql`：写真と花束実例のテーブル
+- `wrangler.jsonc`：Workers + D1 + R2の接続設定
 - `tests/`：Node.jsの動作テスト
 
 ### 在庫ロジック
@@ -90,12 +97,23 @@ npx wrangler secret put DEMO_KEY
 
 1. 現行決済事業者名を確認 → 公式のオンライン決済APIに接続
 2. 店舗管理ログインを正式な認証へ変更（2〜3名のスタッフ）
-3. 商品・花束・包装の写真登録（必要ならR2）
+3. 写真の削除・整理、包装画像等の拡張
 4. 注文メール等、通知方法の決定
 5. 価格ルールの差替え、配送・受取の最低限の制約設定
 6. 実商品データの登録、運用テスト、本番公開準備
 
-## 5. テスト
+## 5. スマホでGitHub → Cloudflare公開
+
+1. GitHubにはZIPではなく、フォルダ構成のままソースを登録する。
+2. `wrangler.jsonc` の `database_id` を実際のD1 UUIDに置換する。
+3. Cloudflare D1の Console で `migrations/0001_init.sql` → `migrations/0002_images_bouquets.sql` の内容を順番に実行する。
+4. R2 Object Storageで `flower-shop-photos` バケットを作る。
+5. Cloudflare Workers & Pages → Create application → Import a repository からGitHubに接続し、Deploy commandは `npx wrangler deploy` とする。
+6. Workerの Variables and Secrets に `DEMO_KEY` をSecretとして追加する。
+
+Stage 1の公開サイトは残し、新しいWorkerとしてデプロイする。現時点では決済・正式な認証がないため、実在の顧客情報を取り扱わない。
+
+## 6. テスト
 
 Node.js 22以上では外部ライブラリ不要で以下を実行できる。
 
