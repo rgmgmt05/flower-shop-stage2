@@ -23,15 +23,16 @@ class MockDB {
  }
 }
 const imageMap=new Map();const mockR2={put:async(k,data)=>{imageMap.set(k,data);return {etag:'ok'}},get:async(k)=>imageMap.has(k)?{body:imageMap.get(k)}:null,delete:async(k)=>imageMap.delete(k)};
+let staffCookie='';
 const db=new MockDB(),env={DB:db,FLOWER_IMAGES:mockR2,DEMO_KEY:'a-random-long-demo-secret',ASSETS:{fetch:()=>new Response('ok')}};
 async function req(path, method='GET', data=null, key=true){
- const headers={};if(key)headers['x-demo-key']=env.DEMO_KEY;
+ const headers={};if(key){headers['x-demo-key']=env.DEMO_KEY;if(staffCookie)headers.cookie=staffCookie;}
  if(data!==null)headers['content-type']='application/json';
  const result=await worker.fetch(new Request('https://demo.example'+path,{method,headers,body:data===null?undefined:JSON.stringify(data)}),env);
- return {status:result.status, data:await result.json()};
+ return {status:result.status,data:await result.json(),cookie:result.headers.get('set-cookie')};
 }
 assert.equal((await req('/api/catalog','GET',null,false)).data.products.length,6);
-assert.equal((await req('/api/admin/state','GET',null,false)).status,401);
+assert.equal((await req('/api/admin/state','GET',null,false)).status,403);
 assert.equal((await req('/api/demo/orders','POST',{lines:[]},false)).status,401);
 const start=(await req('/api/admin/state')).data;
 assert.equal(start.products.find(p=>p.id==='rose-r').stock,18);
