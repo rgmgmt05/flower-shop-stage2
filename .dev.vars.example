@@ -1,0 +1,2 @@
+# Copy to .dev.vars in local only. Do not commit this file with real secrets.
+DEMO_KEY="replace-with-long-random-demo-passphrase"
