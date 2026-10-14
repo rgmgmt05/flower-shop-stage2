@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import worker from '../src/worker.js';
 
 class MockDB {
- constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0003_completed_bouquets.sql',import.meta.url),'utf8'))}
+ constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0003_completed_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0004_accounts.sql',import.meta.url),'utf8'))}
  prepare(sql){
   const instance=this.db;
   function bound(params=[]){return {
