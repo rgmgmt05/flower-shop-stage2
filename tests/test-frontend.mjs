@@ -22,7 +22,7 @@ const ctx={
  document:{getElementById:el,querySelectorAll:()=>[]},
  window:{scrollTo:()=>{}},
  fetch:fetchFake,console,confirm:()=>true,setTimeout:()=>1,clearTimeout:()=>{},
- Date,Number,Map,Promise,URL,Image
+ Date,Number,Map,Promise,URL,Image:class {}
 };
 vm.createContext(ctx);vm.runInContext(code,ctx);
 await new Promise(r=>setImmediate(r));
