@@ -24,13 +24,14 @@ main{max-width:1220px;margin:auto;padding:30px 24px 90px}section.view{display:no
 </style>
 </head>
 <body>
-<header><div class="header-inner"><div class="brand" onclick="navigate(&#39;shop&#39;)">花と余白<span>FLOWER SHOP · DEMO</span></div><nav><button data-nav="shop" onclick="navigate(&#39;shop&#39;)">花を選ぶ</button><button data-nav="builder" onclick="navigate('builder')">花束をつくる</button><button onclick="navigate('shop');document.getElementById('example-section').scrollIntoView({behavior:'smooth'})">最近の花束</button><button data-nav="cart" onclick="navigate('cart')">カート <span id="cart-count">0</span></button><button data-nav="admin" onclick="navigate('admin')">店舗管理</button></nav></div></header>
-<div class="demo-strip">共有デモ｜仮の花材・価格・デモ注文のみ。実際の決済には対応していません。</div>
+<header><div class="header-inner"><div class="brand" onclick="navigate(&#39;shop&#39;)">花と余白<span>FLOWER SHOP · DEMO</span></div><nav><button data-nav="shop" onclick="navigate(&#39;shop&#39;)">花を選ぶ</button><button data-nav="builder" onclick="navigate('builder')">花束をつくる</button><button onclick="navigate('shop');document.getElementById('example-section').scrollIntoView({behavior:'smooth'})">最近の花束</button><button data-nav="cart" onclick="navigate('cart')">カート <span id="cart-count">0</span></button><button data-nav="account" onclick="navigate('account')">ログイン・マイページ</button><button data-nav="admin" onclick="navigate('admin')">店舗管理</button></nav></div></header>
+<div class="demo-strip">Stage 3A 開発デモ｜決済なし・実名や実在の連絡先は入力しないでください。</div>
 <main>
 <section id="view-shop" class="view"><div class="hero"><div class="hero-copy"><div class="kicker">A small flower shop, thoughtfully made</div><h1>今日の一輪から、<br>自分だけの花束まで。</h1><p class="sub">切り花を1本から選べます。花束は花材・本数・包装を自由に組み合わせて。</p><div class="action-row"><button class="primary" onclick="navigate('builder')">花束をつくる →</button></div></div><div class="hero-art"><span>Flowers, your way.</span></div></div><div class="flex"><div><div class="kicker">Single stems</div><h2>今日の切り花</h2></div><span class="hint">商品と在庫は店舗管理から変更できます</span></div><div class="grid" id="product-grid"></div><div id="example-section" style="margin-top:45px"><div class="kicker">From our recent bouquets</div><h2>最近制作した花束から選ぶ</h2><p class="sub">実際に制作した花束をベースに、花材や包装を自由に変更できます。写真は完成例です。</p><div class="grid" id="example-grid"></div></div></section>
 <section id="view-builder" class="view"><div class="kicker">Custom bouquet</div><h1>花束をつくる</h1><p class="sub">花材の本数とラッピングを選んでください。価格はその場で変わります。</p><div class="notice">試作の仮ルール：花材合計 ＋ 包装代 ＋ 制作料500円。実際の価格計算方法は後から差し替えます。</div><div class="two"><div class="stack"><div class="panel"><h3>1. 花材を選ぶ</h3><div id="builder-flowers"></div></div><div class="panel"><h3>2. ラッピングを選ぶ</h3><div class="wraps" id="wrap-options"></div></div></div><div class="panel sticky"><h3>花束の内容</h3><div id="bouquet-summary"></div><div class="action-row"><button class="primary" id="add-bouquet" onclick="addBouquet()">花束をカートに入れる</button><button class="light" onclick="resetBuilder()">選択をクリア</button></div><p class="hint">特殊な花束や品切れのお問い合わせは、店舗へお電話ください。</p></div></div></section>
-<section id="view-cart" class="view"><div class="kicker">Your order</div><h1>カートと注文</h1><div class="two"><div class="panel"><h3>注文内容</h3><div id="cart-lines"></div></div><div class="panel"><h3>ご注文者情報（テスト用）</h3><p class="hint">テスト注文は共有データベースへ保存されます。実際の氏名・連絡先は入力しないでください。</p><div class="form-grid"><label class="field">お名前（仮名）<input id="customer-name" placeholder="例：テスト 花子" autocomplete="off" /></label><label class="field">ご連絡先（架空の値）<input id="customer-contact" placeholder="例：demo@example.invalid" autocomplete="off" /></label><label class="field wide">受取希望日（試験入力）<input id="pickup-date" type="date" /></label></div><div class="line flex"><strong>合計</strong><strong class="summary-total" id="cart-total">¥0</strong></div><button class="primary" id="test-checkout" onclick="checkout()">テスト注文する（決済なし）</button><p class="hint">※デモボタンです。実決済は行われません。確定時に在庫を減らします。</p></div></div></section>
-<section id="view-admin" class="view"><div class="kicker">Back office</div><div class="flex"><div><h1>店舗管理</h1><p class="sub">在庫・仕入れ・店頭販売・EC注文をまとめて管理</p></div><span class="tag warn">共通データベース・デモ認証</span></div><div class="statline" id="admin-stats"></div><div class="tabs"><button data-tab="stock" onclick="setAdminTab('stock')">商品・在庫</button><button data-tab="movement" onclick="setAdminTab('movement')">仕入れ・販売・廃棄</button><button data-tab="orders" onclick="setAdminTab('orders')">EC注文</button><button data-tab="templates" onclick="setAdminTab('templates')">完成花束の登録</button></div><div id="admin-body"></div><div class="action-row"><button class="light small" onclick="refreshData()">データを再取得</button><button class="light small" onclick="logoutDemo()">体験用キーを解除</button><span class="hint">デモ専用：実注文・顧客情報を登録しないでください。</span></div></section>
+<section id="view-cart" class="view"><div class="kicker">Your order</div><h1>カートと注文</h1><div class="two"><div class="panel"><h3>注文内容</h3><div id="cart-lines"></div></div><div class="panel"><h3>ご注文者情報（テスト用）</h3><p class="hint">テスト注文は共有データベースへ保存されます。実際の氏名・連絡先は入力しないでください。</p><div class="form-grid"><label class="field">お名前（仮名）<input id="customer-name" placeholder="例：テスト 花子" autocomplete="off" /></label><label class="field">ご連絡先（架空の値）<input id="customer-contact" placeholder="例：demo@example.invalid" autocomplete="off" /></label><label class="field wide">受取希望日（試験入力）<input id="pickup-date" type="date" /></label><label class="field wide" id="guest-key-box">ゲストのテスト注文用招待キー（アカウントにログインすると不要）<input id="guest-key" type="password" placeholder="開発用招待キー" autocomplete="off" /></label></div><div id="order-result" class="notice" style="display:none"></div><div class="line flex"><strong>合計</strong><strong class="summary-total" id="cart-total">¥0</strong></div><button class="primary" id="test-checkout" onclick="checkout()">テスト注文する（決済なし）</button><p class="hint">※デモボタンです。実決済は行われません。確定時に在庫を減らします。</p></div></div></section>
+<section id="view-account" class="view"><div class="kicker">Your account</div><h1>マイページ</h1><p class="sub">スタッフの個別ログイン・会員向け注文履歴（開発用）</p><div class="notice">これはテスト環境です。登録時は架空のメールアドレス・名前・専用のテスト用パスワードを使用してください。メール認証・本決済はまだありません。</div><div id="account-content"></div></section>
+<section id="view-admin" class="view"><div class="kicker">Back office</div><div class="flex"><div><h1>店舗管理</h1><p class="sub">在庫・仕入れ・店頭販売・EC注文をまとめて管理</p></div><span class="tag warn">スタッフ個別ログイン・テスト環境</span></div><div class="statline" id="admin-stats"></div><div class="tabs"><button data-tab="stock" onclick="setAdminTab('stock')">商品・在庫</button><button data-tab="movement" onclick="setAdminTab('movement')">仕入れ・販売・廃棄</button><button data-tab="orders" onclick="setAdminTab('orders')">EC注文</button><button data-tab="templates" onclick="setAdminTab('templates')">完成花束の登録</button></div><div id="admin-body"></div><div class="action-row"><button class="light small" onclick="refreshData()">データを再取得</button><button class="light small" onclick="logoutAccount()">体験用キーを解除</button><span class="hint">デモ専用：実注文・顧客情報を登録しないでください。</span></div></section>
 </main>
 <div id="toast" role="status" aria-live="polite"></div><footer>花と余白 — 操作確認用の架空の花屋／MVP 第1段階</footer>
 <script>
@@ -48,7 +49,7 @@ const defaultState=()=>({
  wraps:[{id:'natural',name:'クラフト',price:200,icon:'◌'},{id:'white',name:'ホワイト',price:300,icon:'○'},{id:'pink',name:'ピンク',price:350,icon:'✿'}],
  orders:[],movements:[],templates:[], nextId:1
 });
-let state=defaultState(),page='shop',adminTab='stock',cart=[],bouquetQty={},selectedWrap='natural',demoKey=sessionStorage.getItem('flower-shop-demo-key')||'';
+let state=defaultState(),page='shop',adminTab='stock',cart=[],bouquetQty={},selectedWrap='natural',authUser=null,accountOrders=[],demoKey='';
 async function api(path, method='GET', payload=null, requireKey=false){
  const headers={};if(payload!==null)headers['Content-Type']='application/json';
  if(requireKey)headers['x-demo-key']=demoKey;
@@ -59,24 +60,42 @@ async function api(path, method='GET', payload=null, requireKey=false){
 }
 async function refreshData(){
  try{
-  const d=await api(demoKey?'/api/admin/state':'/api/catalog','GET',null,!!demoKey);
-  state={...state,...d,orders:d.orders||[],movements:d.movements||[],templates:d.templates||[]};render();
- }catch(e){if(demoKey){demoKey='';sessionStorage.removeItem('flower-shop-demo-key');}toast(e.message);render()}
+  const staff=authUser?.role==='staff';
+  const d=await api(staff?'/api/admin/state':'/api/catalog');
+  state={...state,...d,orders:d.orders||[],movements:d.movements||[],templates:d.templates||[]};
+  if(authUser){const data=await api('/api/account/orders');accountOrders=data.orders||[]}
+  else accountOrders=[];
+  render();
+ }catch(e){toast(e.message);render()}
 }
-async function loginDemo(){
- const val=document.getElementById('demo-key')?.value.trim();if(!val)return toast('体験用キーを入力してください');
- demoKey=val;
- try{await refreshData();if(!demoKey)throw Error('キーが一致しません');sessionStorage.setItem('flower-shop-demo-key',demoKey);toast('管理画面を開きました');}
+async function initializeAuth(){
+ try{const d=await api('/api/auth/me');authUser=d.user;await refreshData()}
+ catch(e){authUser=null;toast(e.message);await refreshData()}
+}
+async function loginAccount(){
+ const email=document.getElementById('login-email')?.value.trim(),password=document.getElementById('login-pass')?.value;
+ if(!email||!password)return toast('ログイン情報を入力してください');
+ try{const r=await api('/api/auth/login','POST',{email,password});authUser=r.user;await refreshData();toast('ログインしました');}
+ catch(e){toast(e.message)}
+}
+async function registerAccount(){
+ const email=document.getElementById('reg-email')?.value.trim(),displayName=document.getElementById('reg-name')?.value.trim(),password=document.getElementById('reg-pass')?.value,role=document.getElementById('reg-role')?.value;
+ demoKey=document.getElementById('reg-key')?.value.trim()||'';
+ if(!demoKey)return toast('開発用の招待キーを入力してください');
+ try{const r=await api('/api/auth/register','POST',{email,displayName,password,role},true);authUser=r.user;demoKey='';await refreshData();toast('テストアカウントを登録しました')}
  catch(e){demoKey='';toast(e.message)}
 }
-function logoutDemo(){demoKey='';sessionStorage.removeItem('flower-shop-demo-key');refreshData()}
+async function logoutAccount(){
+ try{await api('/api/auth/logout','POST',{});authUser=null;accountOrders=[];await refreshData();navigate('account');toast('ログアウトしました')}
+ catch(e){toast(e.message)}
+}
 async function withUpdate(path,method,payload,success){
- if(!demoKey){navigate('admin');return toast('管理画面で体験用キーを入力してください')}
- try{await api(path,method,payload,true);await refreshData();if(success)toast(success)}catch(e){toast(e.message)}
+ if(authUser?.role!=='staff'){navigate('account');return toast('スタッフアカウントでログインしてください')}
+ try{await api(path,method,payload);await refreshData();if(success)toast(success)}catch(e){toast(e.message)}
 }
 async function uploadPhoto(file){
  if(!file)return null;
- if(!demoKey)throw Error('店舗管理デモのキーが必要です');
+ if(authUser?.role!=='staff')throw Error('スタッフログインが必要です');
  if(!file.type.startsWith('image/'))throw Error('画像を選んでください');
  // Resize on the device; EXIF is stripped by drawing into canvas.
  const objectUrl=URL.createObjectURL(file);
@@ -88,7 +107,7 @@ async function uploadPhoto(file){
  canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.82));
  if(!blob||blob.size>4*1024*1024)throw Error('画像を4MB以下にしてください');
- const r=await fetch('/api/admin/media',{method:'POST',headers:{'x-demo-key':demoKey,'content-type':'image/jpeg'},body:blob});
+ const r=await fetch('/api/admin/media',{method:'POST',headers:{'content-type':'image/jpeg'},body:blob});
  const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'画像アップロードに失敗しました');
  return d.id;
 }
@@ -99,7 +118,7 @@ function product(id){return state.products.find(p=>p.id===id)}
 function wrap(id){return state.wraps.find(w=>w.id===id)}
 function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.style.display='block';clearTimeout(window.__toast);window.__toast=setTimeout(()=>e.style.display='none',2800)}
 function navigate(next){page=next;document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='view-'+next));document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===next));window.scrollTo(0,0);render()}
-function render(){document.getElementById('cart-count').textContent=cart.length;renderShop();renderExamples();renderBuilder();renderCart();renderAdmin()}
+function render(){document.getElementById('cart-count').textContent=cart.length;renderShop();renderExamples();renderBuilder();renderCart();renderAdmin();renderAccount();const box=document.getElementById('guest-key-box');if(box)box.style.display=authUser?'none':'grid'}
 function renderShop(){document.getElementById('product-grid').innerHTML=state.products.filter(p=>p.active).map(p=>`<div class="card"><div class="flower-img ${p.imageId?'photo':esc(p.tone)}">${p.imageId?`<img loading="lazy" src="${photoOf(p.imageId)}" alt="${esc(p.name)}" />`:esc(p.icon)}</div><div class="card-body"><span class="meta">${esc(p.type)}</span><h3 style="margin:7px 0">${esc(p.name)}</h3><div class="flex"><span class="price">${money(p.price)} <small>/本</small></span><span class="tag ${p.stock===0?'warn':''}">残 ${p.stock}</span></div><div class="action-row"><button class="secondary small" ${p.stock===0?'disabled':''} onclick="addSingle('${p.id}')">1本カートへ追加</button></div></div></div>`).join('')||'<div class="empty">販売中の商品がありません。</div>'}
 function renderExamples(){
  document.getElementById('example-grid').innerHTML=state.templates.length?state.templates.map(t=>{
@@ -131,26 +150,38 @@ function sumDemand(lines){const demand=new Map();for(const line of lines){for(co
 // Stock movements are stored only on the server.
 async function checkout(){
  if(!cart.length)return;
- if(!demoKey){navigate('admin');return toast('テスト注文するには体験用キーを入力してください')}
  const name=document.getElementById('customer-name').value.trim(),contact=document.getElementById('customer-contact').value.trim(),pickup=document.getElementById('pickup-date').value;
- if(!name||!contact)return toast('テスト用の名前と連絡先を入力してください');
+ if(!name||!contact)return toast('テスト用の仮名と連絡先を入力してください');
+ demoKey=authUser?'':document.getElementById('guest-key')?.value.trim()||'';
+ if(!authUser&&!demoKey)return toast('ゲストのテスト注文には招待キーが必要です');
  try{
-  const result=await api('/api/demo/orders','POST',{name,contact,pickup,lines:cart},true);
-  cart=[];document.getElementById('customer-name').value='';document.getElementById('customer-contact').value='';
-  await refreshData();navigate('admin');setAdminTab('orders');toast('テスト注文が保存されました（決済なし）');
- }catch(e){toast(e.message)}
+  const result=await api('/api/demo/orders','POST',{name,contact,pickup,lines:cart},!authUser);
+  demoKey='';cart=[];await refreshData();navigate(authUser?.role==='customer'?'account':'cart');
+  const target=document.getElementById('order-result');
+  if(target){target.style.display='block';target.textContent='テスト注文を保存しました。注文番号：'+result.id+'（実決済なし）'}
+  toast('テスト注文を保存しました（決済なし）');
+ }catch(e){demoKey='';toast(e.message)}
 }
 function setAdminTab(tab){adminTab=tab;document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));renderAdmin()}
 function renderAdmin(){
- if(!demoKey){
+ if(authUser?.role!=='staff'){
   document.getElementById('admin-stats').innerHTML='';
-  document.getElementById('admin-body').innerHTML=`<div class="panel"><h3>店舗管理デモへログイン</h3><p class="hint">管理操作・テスト注文には体験用キーが必要です。実際の顧客情報は入力しないでください。</p><div class="form-grid"><label class="field">体験用キー<input id="demo-key" type="password" autocomplete="off" placeholder="配布されたキー" /></label></div><div class="action-row"><button class="primary" onclick="loginDemo()">管理デモを開く</button></div></div>`;
+  document.getElementById('admin-body').innerHTML='<div class="panel"><h3>スタッフログイン</h3><p>在庫・注文管理はスタッフ個別アカウントから利用できます。</p><button class="primary" onclick="navigate(\'account\')">ログインへ</button></div>';
   return;
  }
  const stocks=state.products.reduce((n,p)=>n+p.stock,0),orders=state.orders.filter(o=>o.status!=='canceled');
  document.getElementById('admin-stats').innerHTML=`<div class="stat"><span>花材の総在庫（本）</span><strong>${stocks}</strong></div><div class="stat"><span>ECテスト受注</span><strong>${orders.length}件</strong></div><div class="stat"><span>テスト受注総額</span><strong>${money(orders.reduce((n,o)=>n+o.total,0))}</strong></div>`;
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el.dataset.tab===adminTab));
  document.getElementById('admin-body').innerHTML=adminTab==='stock'?stockHtml():adminTab==='movement'?movementHtml():adminTab==='templates'?templatesHtml():ordersHtml();
+}
+function renderAccount(){
+ const el=document.getElementById('account-content');if(!el)return;
+ if(authUser){
+  const mine=authUser.role==='customer';
+  el.innerHTML=`<div class="panel"><div class="flex"><div><h3>${esc(authUser.displayName)} <span class="tag">${mine?'会員':'スタッフ'}</span></h3><p class="hint">${esc(authUser.email)}</p></div><button class="light" onclick="logoutAccount()">ログアウト</button></div>${mine?'<h3 style="margin-top:24px">注文履歴（テスト）</h3>'+ (accountOrders.map(o=>`<div class="line"><div class="flex"><strong>注文 #${esc(o.id.slice(0,8))}</strong><span class="tag">${esc(o.status)}</span></div><small class="hint">${esc(o.createdAt)} ／ 受取予定：${esc(o.pickup||'未指定')}</small><div class="flex"><span>${o.items.map(i=>esc(i.title)).join('・')}</span><strong>${money(o.total)}</strong></div></div>`).join('')||'<p class="hint">注文履歴はまだありません。</p>'):'<button class="primary" onclick="navigate(\\'admin\\')">店舗管理画面へ</button>'}</div>`;
+  return;
+ }
+ el.innerHTML=`<div class="two"><div class="panel"><h3>ログイン</h3><p class="hint">会員・スタッフ共通</p><div class="stack"><label class="field">メールアドレス（テスト用）<input id="login-email" type="email" autocomplete="username" /></label><label class="field">パスワード<input id="login-pass" type="password" autocomplete="current-password" /></label></div><div class="action-row"><button class="primary" onclick="loginAccount()">ログイン</button></div></div><div class="panel"><h3>テストアカウント作成</h3><p class="hint">登録には開発用招待キーが必要です。メール認証はまだありません。</p><div class="stack"><label class="field">役割<select id="reg-role"><option value="customer">会員</option><option value="staff">スタッフ</option></select></label><label class="field">表示名（仮名）<input id="reg-name" autocomplete="off"/></label><label class="field">メールアドレス（架空）<input id="reg-email" type="email" autocomplete="off" placeholder="test@example.invalid"/></label><label class="field">パスワード（12文字以上・使い回さない）<input id="reg-pass" type="password" autocomplete="new-password"/></label><label class="field">開発用招待キー<input id="reg-key" type="password" autocomplete="off"/></label></div><div class="action-row"><button class="primary" onclick="registerAccount()">作成する</button></div></div></div>`;
 }
 function stockHtml(){return `<div class="panel"><div class="flex"><h3>商品と在庫</h3><span class="hint">価格は円／1本</span></div><div class="scroll-x"><table><thead><tr><th>商品</th><th>販売価格</th><th>在庫</th><th>公開</th><th></th></tr></thead><tbody>${state.products.map(p=>`<tr><td>${p.imageId?`<img class="thumb" src="${photoOf(p.imageId)}" alt=""/>`:''}<strong>${esc(p.name)}</strong><div class="meta">${esc(p.type)}</div><input type="file" id="photo-${p.id}" accept="image/*" aria-label="${esc(p.name)}の写真" /><button class="light small" onclick="replacePhoto('${p.id}')">写真更新</button></td><td><input aria-label="${esc(p.name)}の単価" type="number" min="0" id="price-${p.id}" value="${p.price}" /></td><td><strong>${p.stock}本</strong></td><td>${p.active?'販売中':'非公開'}</td><td class="act"><button class="secondary small" onclick="updateProduct('${p.id}')">単価保存</button> <button class="light small" onclick="toggleProduct('${p.id}')">${p.active?'非公開に':'公開する'}</button></td></tr>`).join('')}</tbody></table></div></div><div class="panel" style="margin-top:16px"><h3>新しい花材を登録</h3><div class="form-grid"><label class="field">商品名<input id="new-name" placeholder="例：赤カーネーション" maxlength="80" /></label><label class="field">分類・属性<input id="new-type" placeholder="例：カーネーション・赤" maxlength="80" /></label><label class="field">販売価格（円／本）<input id="new-price" type="number" min="0" placeholder="250" /></label><label class="field">初期在庫（本）<input id="new-stock" type="number" min="0" placeholder="0" /></label></div><label class="field" style="margin-top:12px">商品写真（スマホから撮影・選択）<input id="new-photo" type="file" accept="image/*" /></label><div class="action-row"><button class="primary" onclick="createProduct()">商品と写真を登録</button></div></div>`}
 function movementHtml(){return `<div class="panel"><h3>仕入れ・店頭販売・廃棄・数量調整</h3><p class="hint">店頭で花束を即興制作した際も、使用した花材を選んで登録できます。複数種類の場合は1種類ずつ入力してください。</p><div class="form-grid"><label class="field">商品<select id="m-product">${state.products.map(p=>`<option value="${p.id}">${esc(p.name)}（残 ${p.stock}）</option>`).join('')}</select></label><label class="field">操作<select id="m-reason" onchange="toggleCost()"><option value="仕入れ">仕入れ（＋）</option><option value="店頭販売">店頭販売（−）</option><option value="廃棄・調整">廃棄・調整（−）</option><option value="在庫補正">在庫補正（＋）</option></select></label><label class="field">数量（本）<input id="m-qty" type="number" min="1" value="1" /></label><label class="field" id="cost-field">仕入れ単価（円／本、任意）<input id="m-cost" type="number" min="0" placeholder="例：120" /></label></div><label class="field" id="movement-photo-field" style="margin-top:12px">今回仕入れた花の写真（任意・商品画像を更新）<input id="m-photo" type="file" accept="image/*" /></label><div class="action-row"><button class="primary" onclick="submitMovement()">在庫に反映する</button></div></div><div class="panel" style="margin-top:16px"><h3>最近の入出庫</h3><div class="scroll-x"><table><thead><tr><th>日時</th><th>商品</th><th>理由</th><th>増減</th><th>原価</th></tr></thead><tbody>${state.movements.slice(0,30).map(m=>`<tr><td>${new Date(m.date).toLocaleString('ja-JP')}</td><td>${esc(product(m.productId)?.name||m.productId)}</td><td>${esc(m.reason)}</td><td>${m.delta>0?'+':''}${m.delta}</td><td>${m.unitCost===null?'—':money(m.unitCost)}</td></tr>`).join('')||'<tr><td colspan="5">まだ記録がありません</td></tr>'}</tbody></table></div></div>`}
@@ -211,7 +242,7 @@ async function cancelOrder(id){
  await orderStatus(id,'canceled');
 }
 async function resetDemo(){toast('データ初期化はこの版では提供していません')}
-navigate('shop');refreshData();
+navigate('shop');initializeAuth();
 </script>
 </body>
 </html>
