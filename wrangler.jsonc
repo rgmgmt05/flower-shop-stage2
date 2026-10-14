@@ -18,10 +18,5 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "FLOWER_IMAGES",
-      "bucket_name": "flower-shop-photos"
-    }
-  ]
+  "r2_buckets": []
 }
