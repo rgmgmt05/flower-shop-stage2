@@ -129,3 +129,26 @@ const noPhoto=await req('/api/admin/orders/'+singleOnly.data.id+'/status','PATCH
 assert.equal(noPhoto.status,200);
 assert.equal(noPhoto.data.templatesCreated,0);
 console.log('PASS: 注文完成時の写真必須・花束ごとの自動登録・重複防止・単品注文完了');
+
+
+const finishedHandover=await req('/api/admin/orders/'+completedId+'/handover','POST',{});
+assert.equal(finishedHandover.status,200);
+assert.equal((await req('/api/admin/orders/'+completedId+'/handover','POST',{})).status,409);
+const member=await req('/api/auth/register','POST',{email:'member@example.invalid',displayName:'テスト会員',role:'customer',password:'only-for-stage3a-demo'});
+assert.equal(member.status,200,JSON.stringify(member));
+const memberCookie=member.cookie.split(';')[0];
+const memberOrder=await worker.fetch(new Request('https://demo.example/api/demo/orders',{
+ method:'POST',headers:{'content-type':'application/json',cookie:memberCookie},
+ body:JSON.stringify({name:'テスト会員',contact:'test.invalid',fulfillmentMethod:'pickup',pickup:'2026-11-02T14:00',lines:[{kind:'single',id:'tulip',qty:1}]})
+}),env);
+assert.equal(memberOrder.status,201);
+const mine=await worker.fetch(new Request('https://demo.example/api/account/orders',{headers:{cookie:memberCookie}}),env);
+assert.equal(mine.status,200);
+assert.equal((await mine.json()).orders.length,1);
+const blocked=await worker.fetch(new Request('https://demo.example/api/admin/state',{headers:{cookie:memberCookie}}),env);
+assert.equal(blocked.status,403);
+const signout=await worker.fetch(new Request('https://demo.example/api/auth/logout',{method:'POST',headers:{cookie:memberCookie}}),env);
+assert.equal(signout.status,200);
+const signedout=await worker.fetch(new Request('https://demo.example/api/account/orders',{headers:{cookie:memberCookie}}),env);
+assert.equal(signedout.status,401);
+console.log('PASS: 引渡し・会員の注文履歴・顧客/スタッフのアクセス分離・ログアウト');
