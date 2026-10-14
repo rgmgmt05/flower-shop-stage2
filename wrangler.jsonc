@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "flower-shop-stage2-images",
+  "name": "flower-shop-stage2-demo",
   "compatibility_date": "2026-10-14",
   "main": "src/worker.js",
   "assets": {
