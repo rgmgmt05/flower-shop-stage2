@@ -116,7 +116,7 @@ async function changeStock(db,v){
   return {ok:true};
 }
 async function setStatus(db,id,status){
-  if(!['producing','done','canceled'].includes(status))throw new Error('注文状態を確認してください');
+  if(!['producing','canceled'].includes(status))throw new Error('注文状態を確認してください');
   const o=await db.prepare('SELECT status FROM orders WHERE id=?').bind(id).first();
   if(!o)throw Object.assign(new Error('注文がありません'),{status:404});
   if(!((o.status==='new'&&['producing','canceled'].includes(status))||(o.status==='producing'&&['done','canceled'].includes(status))))throw Object.assign(new Error('注文状態を変更できません'),{status:409});
@@ -124,6 +124,43 @@ async function setStatus(db,id,status){
   const out=await db.prepare('UPDATE orders SET status=? WHERE id=? AND status=?').bind(status,id,o.status).run();
   if(out.meta?.changes!==1)throw Object.assign(new Error('別の操作で注文状態が変更されました'),{status:409});
   return {ok:true};
+}
+
+// Completing a bouquet order requires a photo for each bouquet line.
+// Save photos as reusable examples in the same transaction as completion.
+async function completeOrder(db,id,photos){
+  const order=await db.prepare('SELECT status,lines_json,created_at FROM orders WHERE id=?').bind(id).first();
+  if(!order)throw Object.assign(new Error('注文がありません'),{status:404});
+  if(order.status!=='producing')throw Object.assign(new Error('制作中の注文だけ完了できます'),{status:409});
+  const lines=JSON.parse(order.lines_json);
+  const bouquets=lines.map((line,index)=>({line,index})).filter(({line})=>line.kind==='bouquet');
+  if(bouquets.length===0){
+    const change=await db.prepare("UPDATE orders SET status='done' WHERE id=? AND status='producing'").bind(id).run();
+    if(change.meta?.changes!==1)throw Object.assign(new Error('注文状態が変更されました'),{status:409});
+    return {ok:true,templatesCreated:0};
+  }
+  if(!Array.isArray(photos)||photos.length!==bouquets.length)throw new Error('完成した花束それぞれの写真を登録してください');
+  const byIndex=new Map();
+  for(const photo of photos){
+    if(!Number.isInteger(photo?.lineIndex)||typeof photo?.imageId!=='string'||byIndex.has(photo.lineIndex))throw new Error('完成写真の指定を確認してください');
+    byIndex.set(photo.lineIndex,photo.imageId);
+  }
+  const batch=[db.prepare("UPDATE orders SET status='done' WHERE id=? AND status='producing'").bind(id)];
+  let number=0;
+  for(const {line,index} of bouquets){
+    number++;
+    const imageId=byIndex.get(index);
+    if(!imageId||!(await db.prepare('SELECT id FROM media WHERE id=?').bind(imageId).first()))throw new Error('花束の完成写真が見つかりません');
+    const templateId=crypto.randomUUID();
+    const name=`完成花束 ${order.created_at.slice(0,10)} #${number}`;
+    batch.push(db.prepare(`INSERT INTO bouquet_templates(id,name,image_id,parts_json,wrap_id,source_order_id,source_line_index)
+      SELECT ?,?,?,?,?,?,? FROM orders WHERE id=? AND status='done'`)
+      .bind(templateId,name,imageId,JSON.stringify(line.parts),line.wrapId,id,index,id));
+  }
+  // A unique index on the source order and line prevents duplicate examples.
+  const result=await db.batch(batch);
+  if(result[0].meta?.changes!==1)throw Object.assign(new Error('注文はすでに処理されています'),{status:409});
+  return {ok:true,templatesCreated:bouquets.length};
 }
 
 // Images are uploaded via the staff-only endpoint and stored in an R2 bucket.
@@ -193,7 +230,10 @@ export default {
       if(productMatch&&request.method==='PATCH')return response(await updateProduct(env.DB,decodeURIComponent(productMatch[1]),await input(request)));
       if(path==='/api/admin/movements'&&request.method==='POST')return response(await changeStock(env.DB,await input(request)),201);
       const orderMatch=path.match(/^\/api\/admin\/orders\/([^/]+)\/status$/);
-      if(orderMatch&&request.method==='PATCH')return response(await setStatus(env.DB,decodeURIComponent(orderMatch[1]),(await input(request)).status));
+      if(orderMatch&&request.method==='PATCH'){
+        const body=await input(request),orderId=decodeURIComponent(orderMatch[1]);
+        return response(body.status==='done'?await completeOrder(env.DB,orderId,body.photos):await setStatus(env.DB,orderId,body.status));
+      }
       return fail('APIが見つかりません',404);
     }catch(e){
       const code=e.status||(/constraint|INSUFFICIENT_STOCK|SALE_DISABLED|CHECK constraint|FOREIGN KEY/i.test(e.message)?409:400);
