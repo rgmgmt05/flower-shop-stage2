@@ -59,7 +59,7 @@ const normalizeHeader=h=>h.replace(/class="staff-main-link is-active" aria-curre
 assert.equal(normalizeHeader(posHeader),normalizeHeader(managerHeader),'identical header controls and ordering');
 assert.ok(shell.includes('staff-main-nav')&&shell.includes('staff-shell-inner'),'navigation driven from shared CSS');
 assert.ok(sw.includes('/staff-shell.css'),'PWA precaches updated nav CSS');
-assert.ok(sw.includes('take-you-staff-shell-v4-20261015-4'),'new version invalidates old cached shell');
+assert.ok(sw.includes('take-you-staff-shell-v4-20261015-5'),'new version invalidates old cached shell');
 assert.ok(read('pos.js').includes('sessionStorage.setItem(CART_DRAFT_KEY'),'unpaid cart survives navigation');
 assert.ok(read('pos.js').includes('sessionStorage.removeItem(CART_DRAFT_KEY'),'completed sale and logout remove draft');
 assert.ok(staff.includes("new URLSearchParams(window.location.search).get('view')"),'account view is addressable from register');
@@ -72,3 +72,14 @@ assert.ok(shell.includes('height:48px;min-height:48px'),'mobile navigation must 
 assert.ok(shell.includes('grid-template-areas:"brand actions" "tabs tabs"'),'mobile app tabs use identical placement');
 
 assert.ok(shell.includes('html{scrollbar-gutter:stable}'),'desktop scrollbar must not move app tabs between screens');
+
+const storefrontScript=read('storefront.js');
+const storefrontStyle=read('storefront.css');
+assert.ok(storefrontScript.includes('builder-flower-thumb'),'EC builder must display flower thumbnails');
+assert.ok(storefrontScript.includes('image(p.imageId)'),'EC builder must use registered media');
+assert.ok(storefrontStyle.includes('.builder-flower-thumb img'),'EC builder photo must fit the thumb');
+assert.ok(staff.includes('staffFlowerThumb(p)'),'manager bouquet builder must use flower photos');
+assert.ok(staff.includes('.staff-flower-thumb img'),'manager builder thumb size controlled');
+assert.ok(read('pos.js').includes('flowerThumb(p)'),'cashier bouquet builder must use photos');
+assert.ok(read('pos.css').includes('.flower-thumb img'),'cashier photo fit controlled');
+console.log('PASS: photos and placeholders integrated into all bouquet builders');
