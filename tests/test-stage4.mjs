@@ -47,7 +47,7 @@ console.log('PASS: installable staff PWA manifest, PNG icons, one app scope, sta
 const shell=read('staff-shell.css');
 assert.ok(p.includes('rel="stylesheet" href="/staff-shell.css"'),'register uses shared navigation CSS');
 assert.ok(staff.includes('rel="stylesheet" href="/staff-shell.css"'),'manager uses shared navigation CSS');
-const headerOf=text=>text.match(/<header class="staff-shell-header">([\\s\\S]*?)<\\/header>/)?.[1];
+const headerOf=text=>text.split('<header class="staff-shell-header">')[1]?.split('</header>')[0];
 const posHeader=headerOf(p),managerHeader=headerOf(staff);
 assert.ok(posHeader&&managerHeader,'shared POS/management headers exist');
 for(const link of ['href="/pos"','href="/staff"','href="/staff?view=account"']){
