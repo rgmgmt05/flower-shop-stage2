@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="manifest" href="/staff.webmanifest">
+<link rel="icon" type="image/png" href="/icons/staff-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="/icons/staff-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Take you">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Take you — 店舗管理デモ</title>
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;color:#26352e;background:#f8f7f2;font-size:15px;--green:#294c3e;--mint:#e7ede6;--line:#deded4;--accent:#a85a56;--muted:#718078}
@@ -89,11 +95,25 @@ footer{background:#f5f5f1;border-top:1px solid #dce2da;color:#7e897d}
  nav{width:100%;justify-content:flex-start}
 }
 
+
+/* Staff app status and install controls */
+.install-pwa,.update-pwa{border:1px solid #b6cbbb!important;background:#e8f1e8!important;color:#315443!important;min-height:37px;padding:7px 10px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap}
+.offline-staff-banner{border-bottom:1px solid #dbbf96;background:#fff3db;color:#775628;font-size:12px;padding:10px clamp(14px,3vw,38px);text-align:center;font-weight:600}
+.install-help{border-bottom:1px solid #cadbc9;background:#edf4ec;color:#34523d;font-size:12px;line-height:1.75;padding:10px clamp(14px,3vw,38px)}
+.staff-offline #checkout{opacity:.35;pointer-events:none}
+@media(max-width:760px){
+ .install-pwa,.update-pwa{font-size:10px;padding:6px}
+ .bar{height:auto;min-height:62px}
+ .bar nav{flex-wrap:wrap;justify-content:flex-end;gap:7px}
+}
+
 </style>
 </head>
 <body>
-<header><div class="header-inner"><a class="brand" href="/staff">Take you<span>STORE MANAGEMENT · DEMO</span></a><nav><a class="nav-pos" href="/pos">レジ</a><button data-nav="admin" onclick="navigate('admin')">店舗管理</button><button data-nav="account" onclick="navigate('account')">スタッフアカウント</button></nav></div></header>
+<header><div class="header-inner"><a class="brand" href="/staff">Take you<span>STORE MANAGEMENT · DEMO</span></a><nav><a class="nav-pos" href="/pos">レジ</a><button id="install-staff-app" class="install-pwa" type="button" hidden>アプリ追加</button><button id="update-staff-app" class="update-pwa" type="button" hidden>更新</button><button data-nav="admin" onclick="navigate('admin')">店舗管理</button><button data-nav="account" onclick="navigate('account')">スタッフアカウント</button></nav></div></header>
 <div class="demo-strip">Stage 3C · 開発デモ｜実際の顧客情報は登録しないでください。</div>
+<div id="offline-staff-banner" class="offline-staff-banner" role="alert" hidden>オフライン：会計・在庫更新には通信が必要です。</div>
+<div id="install-help" class="install-help" role="status" hidden>iPhone：Safariの共有メニューから「ホーム画面に追加」を選択してください。Android：Chromeの「アプリをインストール」または「ホーム画面に追加」を選択してください。</div>
 <main>
 <section id="view-shop" class="view"><div class="hero"><div class="hero-copy"><div class="kicker">A small flower shop, thoughtfully made</div><h1>今日の一輪から、<br>自分だけの花束まで。</h1><p class="sub">切り花を1本から選べます。花束は花材・本数・包装を自由に組み合わせて。</p><div class="action-row"><button class="primary" onclick="navigate('builder')">花束をつくる →</button></div></div><div class="hero-art"><span>Flowers, your way.</span></div></div><div class="flex"><div><div class="kicker">Single stems</div><h2>今日の切り花</h2></div><span class="hint">商品と在庫は店舗管理から変更できます</span></div><div class="grid" id="product-grid"></div><div id="example-section" style="margin-top:45px"><div class="kicker">From our recent bouquets</div><h2>最近制作した花束から選ぶ</h2><p class="sub">実際に制作した花束をベースに、花材や包装を自由に変更できます。写真は完成例です。</p><div class="grid" id="example-grid"></div></div></section>
 <section id="view-builder" class="view"><div class="kicker">Custom bouquet</div><h1>花束をつくる</h1><p class="sub">花材の本数とラッピングを選んでください。価格はその場で変わります。</p><div class="notice">試作の仮ルール：花材合計 ＋ 包装代 ＋ 制作料500円。実際の価格計算方法は後から差し替えます。</div><div class="two"><div class="stack"><div class="panel"><h3>1. 花材を選ぶ</h3><div id="builder-flowers"></div></div><div class="panel"><h3>2. ラッピングを選ぶ</h3><div class="wraps" id="wrap-options"></div></div></div><div class="panel sticky"><h3>花束の内容</h3><div id="bouquet-summary"></div><div class="action-row"><button class="primary" id="add-bouquet" onclick="addBouquet()">花束をカートに入れる</button><button class="light" onclick="resetBuilder()">選択をクリア</button></div><p class="hint">特殊な花束や品切れのお問い合わせは、店舗へお電話ください。</p></div></div></section>
@@ -316,5 +336,6 @@ async function cancelOrder(id){
 async function resetDemo(){toast('データ初期化はこの版では提供していません')}
 navigate('account');initializeAuth().then(()=>{if(authUser?.role==='staff')navigate('admin')});
 </script>
+<script src="/staff-pwa.js" defer></script>
 </body>
 </html>
