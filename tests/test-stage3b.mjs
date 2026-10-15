@@ -22,7 +22,7 @@ let stock=12;
 const products=[{id:'rose-r',name:'赤バラ',type:'バラ',price:350,stock,active:true,imageId:null}];
 const wraps=[{id:'natural',name:'クラフト',price:200}];
 const examples=[{id:'bouquet-example',name:'制作事例',parts:[{id:'rose-r',qty:2}],wrapId:'natural',imageId:null}];
-const site={document:{getElementById:element,querySelectorAll:()=>[],addEventListener:(name,fn)=>listeners[name]=fn},
+const site={document:{body:{classList:{toggle(){}}},getElementById:element,querySelectorAll:()=>[],addEventListener:(name,fn)=>listeners[name]=fn},
  window:{scrollTo:()=>{},addEventListener(){}},history:{pushState(){}},
  location:{pathname:'/',search:''},localStorage:{getItem(){return null},setItem(){}},
  URLSearchParams,Date,Number,Promise,Map,console,setTimeout:()=>1,clearTimeout:()=>{},
