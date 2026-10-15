@@ -12,12 +12,21 @@
 <meta name="apple-mobile-web-app-title" content="Take you">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="/pos.css">
+<link rel="stylesheet" href="/staff-shell.css">
 </head>
 <body>
-<header class="bar">
-  <div class="bar-brand"><a href="/pos" class="logo">Take you</a><span class="sub">STORE POS · DEMO</span></div>
-  <nav aria-label="スタッフ用ナビゲーション"><a href="/staff">店舗管理</a><button id="install-staff-app" class="install-pwa" type="button" hidden>アプリ追加</button><button id="update-staff-app" class="update-pwa" type="button" hidden>更新</button><button id="signout" type="button" hidden>ログアウト</button></nav>
-</header>
+<header class="staff-shell-header"><div class="staff-shell-inner">
+<a class="staff-shell-brand" href="/pos">Take you<small>STAFF APP · DEMO</small></a>
+<nav class="staff-main-nav" aria-label="レジと店舗管理">
+<a href="/pos" class="staff-main-link is-active" aria-current="page">レジ</a>
+<a href="/staff" class="staff-main-link">店舗管理</a>
+</nav>
+<div class="staff-shell-actions">
+<a class="staff-account-link" href="/staff?view=account">アカウント</a>
+<button id="install-staff-app" class="install-pwa" type="button" hidden>アプリ追加</button>
+<button id="update-staff-app" class="update-pwa" type="button" hidden>更新</button>
+<button id="signout" type="button" hidden>ログアウト</button>
+</div></div></header>
 <div id="offline-staff-banner" class="offline-staff-banner" role="alert" hidden>オフライン：会計・在庫更新には通信が必要です。</div>
 <div id="install-help" class="install-help" role="status" hidden>iPhone：Safariの共有メニューから「ホーム画面に追加」を選択してください。Android：Chromeの「アプリをインストール」または「ホーム画面に追加」を選択してください。</div>
 <main>
