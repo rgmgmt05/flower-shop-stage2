@@ -165,3 +165,18 @@ main{max-width:1390px;margin:auto;padding:25px clamp(16px,3vw,38px) 65px}
  .product-unit{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.basket{transition:none}}
+
+
+/* Recent register action is adjacent to the running total on every screen size. */
+.amount-and-last{display:flex;align-items:baseline;justify-content:flex-end;gap:12px;min-width:0;flex-wrap:wrap}
+.last-action{font-size:11px;font-weight:500;color:#687a6a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;max-width:280px}
+.mobile-amount-and-last{display:flex;align-items:baseline;gap:8px;min-width:0}
+.mobile-amount-and-last strong{flex-shrink:0}
+.mobile-amount-and-last .last-action{flex:1;max-width:none;font-size:10px}
+@media(max-width:760px){
+ .mobile-totals-info{min-width:0}
+ .mobile-amount-and-last{width:100%}
+ .mobile-amount-and-last strong{font-size:22px}
+ .mobile-amount-and-last .last-action{font-size:9px}
+ .amount-and-last{gap:7px}
+}
