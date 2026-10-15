@@ -59,7 +59,7 @@ const normalizeHeader=h=>h.replace(/class="staff-main-link is-active" aria-curre
 assert.equal(normalizeHeader(posHeader),normalizeHeader(managerHeader),'identical header controls and ordering');
 assert.ok(shell.includes('staff-main-nav')&&shell.includes('staff-shell-inner'),'navigation driven from shared CSS');
 assert.ok(sw.includes('/staff-shell.css'),'PWA precaches updated nav CSS');
-assert.ok(sw.includes('take-you-staff-shell-v4-20261015-5'),'new version invalidates old cached shell');
+assert.ok(sw.includes('take-you-staff-shell-v4-20261015-6'),'new version invalidates old cached shell');
 assert.ok(read('pos.js').includes('sessionStorage.setItem(CART_DRAFT_KEY'),'unpaid cart survives navigation');
 assert.ok(read('pos.js').includes('sessionStorage.removeItem(CART_DRAFT_KEY'),'completed sale and logout remove draft');
 assert.ok(staff.includes("new URLSearchParams(window.location.search).get('view')"),'account view is addressable from register');
@@ -83,3 +83,8 @@ assert.ok(staff.includes('.staff-flower-thumb img'),'manager builder thumb size 
 assert.ok(read('pos.js').includes('flowerThumb(p)'),'cashier bouquet builder must use photos');
 assert.ok(read('pos.css').includes('.flower-thumb img'),'cashier photo fit controlled');
 console.log('PASS: photos and placeholders integrated into all bouquet builders');
+
+assert.ok(read('pos.js').includes('p.icon||'), 'cashier no-photo fallback uses existing flower icon');
+assert.ok(read('storefront.js').includes('p.icon||'), 'storefront no-photo fallback uses existing flower icon');
+assert.ok(staff.includes('p.icon||'), 'manager no-photo fallback uses existing flower icon');
+assert.ok(read('pos.css').includes('.tone-coral'), 'cashier tonal fallback supported');
