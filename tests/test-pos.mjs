@@ -7,7 +7,7 @@ const css=fs.readFileSync(new URL('../public/pos.css',import.meta.url),'utf8');
 const staff=fs.readFileSync(new URL('../public/staff.html',import.meta.url),'utf8');
 const worker=fs.readFileSync(new URL('../src/worker.js',import.meta.url),'utf8');
 new vm.Script(script);
-for(const id of ['products','quick-qty','mobile-totals','mobile-total','mobile-stems','basket','view-cart','close-cart','cart-scrim','bouquet-parts','bouquet-price','bouquet-quantity','lines','total','checkout'])
+for(const id of ['products','quick-qty','mobile-totals','mobile-total','last-action','mobile-last-action','mobile-stems','basket','view-cart','close-cart','cart-scrim','bouquet-parts','bouquet-price','bouquet-quantity','lines','total','checkout'])
  assert.ok(html.includes('id="'+id+'"'),'missing cashier feature '+id);
 assert.ok(html.includes('data-mode="favorites"'),'favorite products tab');
 assert.ok(css.includes('body.cart-open .basket'),'mobile receipt sheet CSS');
@@ -47,6 +47,8 @@ assert.ok(!element('products').innerHTML.includes('ユーカリ'));
 vm.runInContext("setPreset(10);addSingle('rose')",context);
 assert.equal(vm.runInContext("singleQuantity('rose')",context),10);
 assert.equal(element('mobile-total').textContent,'¥3,500');
+assert.equal(element('last-action').textContent,'直近：赤バラ +10本 · ¥3,500');
+assert.equal(element('mobile-last-action').textContent,element('last-action').textContent);
 assert.ok(element('products').innerHTML.includes('会計中 10本'));
 vm.runInContext("addSingle('rose');selectMode('single');addSingle('green',5)",context);
 assert.equal(vm.runInContext("singleQuantity('rose')",context),20);
@@ -56,6 +58,7 @@ assert.ok(element('mobile-stems').textContent.includes('25本'));
 vm.runInContext("updateLineQty(0,35)",context);
 assert.equal(vm.runInContext("singleQuantity('rose')",context),35);
 assert.equal(element('mobile-total').textContent,'¥13,100');
+assert.equal(element('last-action').textContent,'直近：赤バラ 35本に変更');
 assert.equal(vm.runInContext("updateLineQty(0,300)",context),false);
 assert.equal(vm.runInContext("singleQuantity('rose')",context),35);
 vm.runInContext("toggleFavorite('green');selectMode('favorites')",context);
@@ -70,6 +73,7 @@ assert.equal(vm.runInContext("currentDemand().get('rose')",context),55);
 assert.equal(vm.runInContext("currentDemand().get('green')",context),15);
 assert.equal(element('mobile-total').textContent,'¥30,100');
 assert.ok(classes.has('cart-open'),'bouquet opens receipt sheet');
+assert.equal(element('mobile-last-action').textContent,'直近：花束 +10点 · ¥17,000');
 vm.runInContext('closeCart()',context);
 assert.ok(!classes.has('cart-open'));
 vm.runInContext("updateLineQty(2,200)",context); // Should be rejected due to stock.
