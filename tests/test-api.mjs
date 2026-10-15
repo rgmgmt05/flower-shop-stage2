@@ -9,7 +9,7 @@ assert.ok(Number.isInteger(pbkdf2Rounds)&&pbkdf2Rounds>=1&&pbkdf2Rounds<=100000,
 
 
 class MockDB {
- constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0003_completed_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0004_accounts.sql',import.meta.url),'utf8'))}
+ constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0003_completed_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0004_accounts.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0005_pos.sql',import.meta.url),'utf8'))}
  prepare(sql){
   const instance=this.db;
   function bound(params=[]){return {
@@ -157,3 +157,30 @@ assert.equal(signout.status,200);
 const signedout=await worker.fetch(new Request('https://demo.example/api/account/orders',{headers:{cookie:memberCookie}}),env);
 assert.equal(signedout.status,401);
 console.log('PASS: 引渡し・会員の注文履歴・顧客/スタッフのアクセス分離・ログアウト');
+
+
+const pointId='e6295e25-31d0-424e-adf4-2140d686e94c';
+const beforePos=(await req('/api/admin/state')).data.products;
+const bStock=id=>beforePos.find(x=>x.id===id).stock;
+const posSale=await req('/api/pos/sales','POST',{requestId:pointId,paymentMethod:'cash',lines:[
+ {kind:'single',id:'tulip',qty:2},
+ {kind:'bouquet',parts:[{id:'gerbera',qty:1},{id:'green',qty:2}],wrapId:'natural',price:4200}
+]});
+assert.equal(posSale.status,201,JSON.stringify(posSale));
+assert.equal(posSale.data.total,4200+2*280);
+assert.equal((await req('/api/admin/state')).data.products.find(p=>p.id==='tulip').stock,bStock('tulip')-2);
+assert.equal((await req('/api/admin/state')).data.products.find(p=>p.id==='gerbera').stock,bStock('gerbera')-1);
+assert.equal((await req('/api/admin/state')).data.products.find(p=>p.id==='green').stock,bStock('green')-2);
+const repeated=await req('/api/pos/sales','POST',{requestId:pointId,paymentMethod:'cash',lines:[{kind:'single',id:'tulip',qty:2}]});
+assert.equal(repeated.status,201);
+assert.equal(repeated.data.alreadyProcessed,true);
+assert.equal((await req('/api/admin/state')).data.products.find(p=>p.id==='tulip').stock,bStock('tulip')-2);
+assert.equal((await req('/api/pos/sales','GET')).data.sales.length,1);
+const shortage=await req('/api/pos/sales','POST',{requestId:'8c1f211d-d59f-42dd-994d-879deaa64b62',paymentMethod:'cash',lines:[{kind:'single',id:'tulip',qty:999}]});
+assert.equal(shortage.status,409);
+assert.equal((await req('/api/pos/sales','GET')).data.sales.length,1);
+const invalidLine=await req('/api/pos/sales','POST',{requestId:'090ac877-b524-4991-8db1-98cb35737480',paymentMethod:'cash',lines:[{kind:'bouquet',parts:[],price:500}]});
+assert.equal(invalidLine.status,400);
+const noStaff=await worker.fetch(new Request('https://demo.example/api/pos/sales'),env);
+assert.equal(noStaff.status,403);
+console.log('PASS: POS在庫一括減算、即興花束の自由価格、会計再送の重複防止、在庫不足ロールバック、スタッフ権限');
