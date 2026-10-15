@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Take you">
+<rect width="512" height="512" rx="100" fill="#2e503d"/>
+<path d="M166 156h180v32h-73v169h26v27h-86v-27h26V188h-73z" fill="#f6f7f3"/>
+<path d="M166 145h180" stroke="#f6f7f3" stroke-width="6" stroke-linecap="round"/>
+<circle cx="256" cy="115" r="8" fill="#c4d4bf"/>
+</svg>
