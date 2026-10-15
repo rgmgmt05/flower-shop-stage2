@@ -59,8 +59,14 @@ const normalizeHeader=h=>h.replace(/class="staff-main-link is-active" aria-curre
 assert.equal(normalizeHeader(posHeader),normalizeHeader(managerHeader),'identical header controls and ordering');
 assert.ok(shell.includes('staff-main-nav')&&shell.includes('staff-shell-inner'),'navigation driven from shared CSS');
 assert.ok(sw.includes('/staff-shell.css'),'PWA precaches updated nav CSS');
-assert.ok(sw.includes('take-you-staff-shell-v4-20261015-2'),'new version invalidates old cached shell');
+assert.ok(sw.includes('take-you-staff-shell-v4-20261015-3'),'new version invalidates old cached shell');
 assert.ok(read('pos.js').includes('sessionStorage.setItem(CART_DRAFT_KEY'),'unpaid cart survives navigation');
 assert.ok(read('pos.js').includes('sessionStorage.removeItem(CART_DRAFT_KEY'),'completed sale and logout remove draft');
 assert.ok(staff.includes("new URLSearchParams(window.location.search).get('view')"),'account view is addressable from register');
 console.log('PASS: symmetric staff navigation, active states, account links and update-safe PWA caching');
+
+
+assert.ok(shell.includes('.staff-main-nav .staff-main-link.is-active'),'visibly selected nav tab');
+assert.ok(shell.includes('border:1px solid #c1cec1'),'inactive nav must still look like a button');
+assert.ok(shell.includes('height:48px;min-height:48px'),'mobile navigation must have fixed, comfortable button height');
+assert.ok(shell.includes('grid-template-areas:"brand actions" "tabs tabs"'),'mobile app tabs use identical placement');
