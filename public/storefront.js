@@ -86,7 +86,7 @@ function bouquetTotal(){
 function renderBuilder(){
  $('builder-products').innerHTML=catalog.products.filter(p=>p.active).map(p=>
  '<div class="plain-line builder-flower">'+
- '<span class="builder-flower-thumb">'+(p.imageId?'<img loading="lazy" src="'+image(p.imageId)+'" alt="" onerror="this.parentElement.textContent=\'写真未登録\'">':'写真未登録')+'</span>'+
+ '<span class="builder-flower-thumb tone-'+(['coral','white','yellow','lilac','green'].includes(p.tone)?p.tone:'neutral')+'">'+(p.imageId?'<img loading="lazy" src="'+image(p.imageId)+'" alt="" onerror="this.remove()">':'')+'<span class="thumb-symbol" aria-label="写真未登録">'+esc(p.icon||'✿')+'</span></span>'+
  '<div class="builder-flower-details"><strong>'+esc(p.name)+'</strong><small>'+(p.type?esc(p.type)+' · ':'')+money(p.price)+' / 本 · 在庫 '+p.stock+'</small></div>'+
  '<div class="plain-counter"><button type="button" data-part="'+esc(p.id)+'" data-delta="-1" aria-label="'+esc(p.name)+'を減らす">−</button><strong>'+(parts[p.id]||0)+'</strong><button type="button" data-part="'+esc(p.id)+'" data-delta="1" aria-label="'+esc(p.name)+'を増やす" '+((parts[p.id]||0)>=p.stock?'disabled':'')+'>＋</button></div></div>').join('')||'<p class="blank">商品はまだ登録されていません。</p>';
  $('builder-wraps').innerHTML=catalog.wraps.map(w=>'<button type="button" data-wrap="'+esc(w.id)+'" class="'+(w.id===wrapId?'selected':'')+'">'+esc(w.name)+'　'+money(w.price)+'</button>').join('');
