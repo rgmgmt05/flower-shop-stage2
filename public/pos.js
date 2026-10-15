@@ -4,10 +4,40 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&
 const yen=v=>'¥'+Number(v||0).toLocaleString('ja-JP');
 let catalog={products:[],wraps:[]},cart=[],parts={},user=null;
 let mode='favorites',preset=1,pendingId=crypto.randomUUID(),processing=false,favorites=new Set(),cartOpen=false,lastAction='—';
+const CART_DRAFT_KEY='take-you-register-unpaid-v1';
+function persistCart(){
+ if(typeof sessionStorage==='undefined'||user?.role!=='staff')return;
+ try{sessionStorage.setItem(CART_DRAFT_KEY,JSON.stringify({
+  staffId:user.id,lines:cart,requestId:pendingId,last:lastAction
+ }))}catch(e){}
+}
+function restoreCart(){
+ if(typeof sessionStorage==='undefined'||user?.role!=='staff')return;
+ try{
+  const raw=sessionStorage.getItem(CART_DRAFT_KEY);
+  if(!raw)return;
+  const state=JSON.parse(raw);
+  if(state.staffId!==user.id||!Array.isArray(state.lines))return;
+  const next=state.lines;
+  if(next.length>40||next.some(l=>!l||!['single','bouquet'].includes(l.kind)||!Number.isInteger(l.qty)||l.qty<1||l.qty>999)){
+   sessionStorage.removeItem(CART_DRAFT_KEY);return;
+  }
+  const prev=cart;cart=next;
+  if(validateCart(cart)||cart.reduce((n,l)=>n+lineTotal(l),0)>10000000){
+   cart=prev;sessionStorage.removeItem(CART_DRAFT_KEY);return;
+  }
+  if(typeof state.requestId==='string'&&/^[0-9a-f-]{36}$/.test(state.requestId))pendingId=state.requestId;
+  lastAction=typeof state.last==='string'&&state.last.length<200?state.last:'—';
+  $('last-action').textContent='直近：'+lastAction;
+  $('mobile-last-action').textContent='直近：'+lastAction;
+ }catch(e){}
+}
+function forgetCart(){if(typeof sessionStorage!=='undefined'){try{sessionStorage.removeItem(CART_DRAFT_KEY)}catch(e){}}}
 function setLastAction(value){
  lastAction=String(value);
  $('last-action').textContent='直近：'+lastAction;
  $('mobile-last-action').textContent='直近：'+lastAction;
+ persistCart();
 }
 const prod=id=>catalog.products.find(p=>p.id===id);
 const getWrap=id=>catalog.wraps.find(w=>w.id===id);
@@ -38,7 +68,7 @@ function showAuth(){
 function showPos(){
  $('loading').hidden=true;$('auth').hidden=true;$('pos').hidden=false;$('signout').hidden=false;$('mobile-totals').hidden=false;
  $('staff-label').textContent=user.displayName+' / スタッフ';
- loadFavorites();render();fetchSales();
+ loadFavorites();restoreCart();render();fetchSales();
 }
 async function init(){
  try{
@@ -86,7 +116,7 @@ function orderStats(){
 function afterCartChange(){
  pendingId=crypto.randomUUID();
  $('receipt').hidden=true;
- renderCart();renderProducts();
+ renderCart();renderProducts();persistCart();
 }
 function addSingle(id,qty=preset){
  const p=prod(id);
@@ -270,7 +300,7 @@ async function checkout(){
  processing=true;$('checkout').disabled=true;
  try{
   const result=await request('/api/pos/sales','POST',{requestId:pendingId,paymentMethod:method,lines:cart});
-  cart=[];parts={};pendingId=crypto.randomUUID();
+  cart=[];parts={};pendingId=crypto.randomUUID();forgetCart();
   setLastAction('会計確定 · '+yen(result.total));
   $('receipt').textContent='会計完了 · '+result.id.slice(0,8)+' · '+yen(result.total)+(result.alreadyProcessed?'（再送確認）':'');
   $('receipt').hidden=false;
@@ -287,7 +317,7 @@ async function fetchSales(){
 }
 $('login-form').addEventListener('submit',e=>{e.preventDefault();login()});
 $('signout').addEventListener('click',async()=>{
- try{await request('/api/auth/logout','POST',{});user=null;cart=[];parts={};setLastAction('—');showAuth()}catch(e){notice(e.message)}
+ try{await request('/api/auth/logout','POST',{});forgetCart();user=null;cart=[];parts={};setLastAction('—');showAuth()}catch(e){notice(e.message)}
 });
 $('filter').addEventListener('input',renderProducts);
 $('quick-qty').addEventListener('change',e=>{
