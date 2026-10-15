@@ -21,11 +21,79 @@ main{max-width:1220px;margin:auto;padding:30px 24px 90px}section.view{display:no
 #toast{position:fixed;bottom:25px;right:25px;background:#283f34;color:white;border-radius:8px;padding:14px 17px;box-shadow:0 7px 30px #1120184a;z-index:30;display:none;max-width:350px;font-size:13px}.notice{background:#fff6e6;border:1px solid #ead8b9;padding:13px 16px;border-radius:8px;color:#865e2e;font-size:12px;line-height:1.6;margin:15px 0}
 .example-img{height:165px;background:#e7ece5;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden}.example-img img{width:100%;height:100%;object-fit:cover}.thumb{width:44px;height:44px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px}.photo-field{display:grid;gap:6px}.photo-field input{max-width:100%}footer{text-align:center;color:#8b948c;font-size:12px;padding:30px;border-top:1px solid var(--line)}
 @media(max-width:760px){main{padding:18px 14px 60px}.hero{grid-template-columns:1fr;gap:12px}.hero-copy{padding:25px}.hero-art{min-height:110px}.hero-art span{font-size:21px}.hero-art:before{font-size:100px}h1{font-size:29px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.flower-img{height:100px;font-size:55px}.card-body{padding:12px}.two{grid-template-columns:1fr}.sticky{position:static}.panel{padding:17px}.builder-item{grid-template-columns:1fr auto;gap:7px}.builder-item .meta{grid-column:1}.wraps{grid-template-columns:repeat(3,1fr)}.statline{grid-template-columns:repeat(2,1fr)}.header-inner{padding:10px 14px;gap:8px}.brand{font-size:19px}nav button{padding:7px;font-size:12px}.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}}
+
+/* Stage 3C management UI: same restrained operational system as the register. */
+:root{--green:#315443;--mint:#ecf0e9;--line:#dae1d8;--muted:#738174;--accent:#8b6154;color:#25332b;background:#f5f5f1;font-size:14px}
+html{background:#f5f5f1}body{background:#f5f5f1;color:#25332b}
+a,a:link,a:visited{color:inherit;text-decoration:none}
+header{background:#fdfdfa;border-bottom:1px solid #d5dfd5;box-shadow:0 1px 2px #1d352008}
+.header-inner{max-width:1320px;padding:17px 30px;gap:18px}
+.brand{color:#315443!important;font-weight:normal;font-size:24px;letter-spacing:.14em}
+.brand span{font-size:9px;letter-spacing:.15em;color:#738174;line-height:1.8}
+nav{align-items:center;gap:8px}
+nav button,nav .nav-pos{font-size:13px;font-weight:500;padding:11px 14px;border-radius:5px;min-height:41px;display:inline-flex;align-items:center;justify-content:center}
+nav button{color:#435a49}
+nav button.active,nav button:hover{background:#ecf0e9;color:#294a39}
+nav .nav-pos{background:#315443;color:#fff!important}
+nav .nav-pos:hover{background:#264435;color:#fff!important}
+.demo-strip{background:#edf0e8;color:#607262;text-align:left;padding:9px max(16px,calc((100% - 1260px)/2));border-bottom:1px solid #d9e0d7;font-size:11px}
+main{max-width:1320px;padding:32px 30px 90px}
+.kicker{color:#68796c;text-transform:uppercase;font-size:10px;letter-spacing:.17em}
+h1{font-size:32px;margin-bottom:11px;color:#2c3c30}
+h2{font-size:25px}
+h3{font-size:17px;font-weight:600}
+.sub{font-size:13px}
+.panel,.card,.stat{border:1px solid #dce2da;border-radius:8px;box-shadow:0 1px 2px #182e1e09;background:#fff}
+.panel{padding:26px}
+.statline{gap:13px;margin:28px 0}
+.stat{padding:20px}
+.stat strong{font-size:28px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px}
+.tabs{border-bottom:1px solid #dce2da;padding-bottom:13px;margin:23px 0}
+.tabs button{background:transparent;border-color:transparent;border-radius:5px;color:#54695a;padding:12px 17px}
+.tabs button.active{background:#315443;border-color:#315443;color:#fff}
+.primary,.secondary,.light,.danger{font-weight:500;border-radius:5px;min-height:42px}
+.primary{background:#315443;color:#fff}
+.primary:hover{background:#264435}
+.secondary{background:#e8efe7}
+.light{background:#fff;border-color:#d7dfd5}
+.small{min-height:35px}
+.field{font-size:12px;color:#4e6555}
+.field input,.field select{border-color:#bccbbd;min-height:43px;border-radius:5px;padding:11px}
+.notice{border-radius:5px;background:#f6f4ec;border-color:#e1dfcf;color:#645e49}
+.tag{background:#e9efe8;border-radius:4px;color:#4c6552}
+table{font-size:12px}
+th{background:#f2f5f1}
+th,td{padding:13px 12px}
+td{color:#394d3f}
+footer{background:#f5f5f1;border-top:1px solid #dce2da;color:#7e897d}
+#toast{background:#2d4837;border-radius:5px}
+:focus-visible{outline:2px solid #5f8c6d;outline-offset:2px}
+@media(max-width:760px){
+ main{padding:22px 14px 70px}
+ .header-inner{padding:12px 14px;gap:10px}
+ .brand{font-size:21px}
+ nav{gap:5px}
+ nav button,nav .nav-pos{padding:9px 10px;font-size:11px;min-height:39px}
+ .demo-strip{padding:9px 14px}
+ h1{font-size:28px}
+ .panel{padding:17px}
+ .statline{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .stat{padding:15px}
+ .tabs button{font-size:12px;padding:11px}
+ .form-grid{grid-template-columns:1fr}
+ .brand span{font-size:8px}
+}
+@media(max-width:380px){
+ .header-inner{flex-wrap:wrap}
+ nav{width:100%;justify-content:flex-start}
+}
+
 </style>
 </head>
 <body>
-<header><div class="header-inner"><a class="brand" href="/staff">Take you<span>STORE MANAGEMENT · DEMO</span></a><nav><a href="/pos" style="display:inline-block;text-decoration:none;padding:12px 15px;font-size:14px;background:#31523e;color:#fff;border-radius:8px">レジを開く</a><button data-nav="admin" onclick="navigate('admin')">店舗管理</button><button data-nav="account" onclick="navigate('account')">スタッフアカウント</button></nav></div></header>
-<div class="demo-strip">Stage 3A 開発デモ｜決済なし・実名や実在の連絡先は入力しないでください。</div>
+<header><div class="header-inner"><a class="brand" href="/staff">Take you<span>STORE MANAGEMENT · DEMO</span></a><nav><a class="nav-pos" href="/pos">レジ</a><button data-nav="admin" onclick="navigate('admin')">店舗管理</button><button data-nav="account" onclick="navigate('account')">スタッフアカウント</button></nav></div></header>
+<div class="demo-strip">Stage 3C · 開発デモ｜実際の顧客情報は登録しないでください。</div>
 <main>
 <section id="view-shop" class="view"><div class="hero"><div class="hero-copy"><div class="kicker">A small flower shop, thoughtfully made</div><h1>今日の一輪から、<br>自分だけの花束まで。</h1><p class="sub">切り花を1本から選べます。花束は花材・本数・包装を自由に組み合わせて。</p><div class="action-row"><button class="primary" onclick="navigate('builder')">花束をつくる →</button></div></div><div class="hero-art"><span>Flowers, your way.</span></div></div><div class="flex"><div><div class="kicker">Single stems</div><h2>今日の切り花</h2></div><span class="hint">商品と在庫は店舗管理から変更できます</span></div><div class="grid" id="product-grid"></div><div id="example-section" style="margin-top:45px"><div class="kicker">From our recent bouquets</div><h2>最近制作した花束から選ぶ</h2><p class="sub">実際に制作した花束をベースに、花材や包装を自由に変更できます。写真は完成例です。</p><div class="grid" id="example-grid"></div></div></section>
 <section id="view-builder" class="view"><div class="kicker">Custom bouquet</div><h1>花束をつくる</h1><p class="sub">花材の本数とラッピングを選んでください。価格はその場で変わります。</p><div class="notice">試作の仮ルール：花材合計 ＋ 包装代 ＋ 制作料500円。実際の価格計算方法は後から差し替えます。</div><div class="two"><div class="stack"><div class="panel"><h3>1. 花材を選ぶ</h3><div id="builder-flowers"></div></div><div class="panel"><h3>2. ラッピングを選ぶ</h3><div class="wraps" id="wrap-options"></div></div></div><div class="panel sticky"><h3>花束の内容</h3><div id="bouquet-summary"></div><div class="action-row"><button class="primary" id="add-bouquet" onclick="addBouquet()">花束をカートに入れる</button><button class="light" onclick="resetBuilder()">選択をクリア</button></div><p class="hint">特殊な花束や品切れのお問い合わせは、店舗へお電話ください。</p></div></div></section>
