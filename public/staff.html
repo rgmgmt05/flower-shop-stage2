@@ -264,10 +264,13 @@ function loadTemplate(id){
 function addSingle(id){const p=product(id);if(!p||p.stock<1)return toast('在庫がありません');cart.push({kind:'single',id,qty:1});toast(p.name+'を追加しました');render()}
 function builderTotal(){let sub=0,count=0;for(const [id,q] of Object.entries(bouquetQty)){const p=product(id);if(p&&q>0){sub+=p.price*q;count+=q}}return {sub,count,wrapPrice:wrap(selectedWrap)?.price??0,total:sub+(count>0?500+(wrap(selectedWrap)?.price??0):0)}}
 function staffFlowerThumb(p){
- return '<span class="staff-flower-thumb">'+(p.imageId
-  ?'<img loading="lazy" src="'+photoOf(p.imageId)+'" alt="" onerror="this.parentElement.textContent=\'写真未登録\'">'
-  :'写真未登録')+'</span>';
+ const tone=['coral','white','yellow','lilac','green'].includes(p.tone)?p.tone:'neutral';
+ const icon='<span class="thumb-symbol" aria-label="写真未登録">'+esc(p.icon||'✿')+'</span>';
+ return '<span class="staff-flower-thumb tone-'+tone+'">'+(p.imageId
+  ?'<img loading="lazy" src="'+photoOf(p.imageId)+'" alt="" onerror="this.remove()">'
+  :'')+icon+'</span>';
 }
+
 function renderBuilder(){document.getElementById('builder-flowers').innerHTML=state.products.filter(p=>p.active).map(p=>`<div class="line builder-item">${staffFlowerThumb(p)}<div class="staff-flower-details"><strong>${esc(p.name)}</strong><div class="meta">${p.type?esc(p.type)+' · ':''}${money(p.price)}/本 · 在庫 ${p.stock}</div></div><div class="counter"><button onclick="changeBouquet('${p.id}',-1)" aria-label="${esc(p.name)}を減らす">−</button><b>${bouquetQty[p.id]||0}</b><button onclick="changeBouquet('${p.id}',1)" aria-label="${esc(p.name)}を増やす" ${p.stock<=0?'disabled':''}>＋</button></div></div>`).join('');document.getElementById('wrap-options').innerHTML=state.wraps.map(w=>`<button class="wrap-choice ${w.id===selectedWrap?'selected':''}" onclick="chooseWrap('${w.id}')"><span style="font-size:28px">${esc(w.icon)}</span><strong>${esc(w.name)}</strong>${money(w.price)}</button>`).join('');const b=builderTotal();const selected=Object.entries(bouquetQty).filter(([id,q])=>q>0&&product(id)).map(([id,q])=>`<div class="flex line"><span>${esc(product(id).name)} × ${q}</span><span>${money(product(id).price*q)}</span></div>`).join('');document.getElementById('bouquet-summary').innerHTML=(selected||'<p class="hint">花材を選ぶとここに表示されます。</p>')+(b.count>0?`<div class="flex line"><span>包装：${esc(wrap(selectedWrap)?.name)}</span><span>${money(b.wrapPrice)}</span></div><div class="flex line"><span>制作料（仮）</span><span>${money(500)}</span></div>`:'')+`<div class="flex line"><strong>合計</strong><strong class="summary-total">${money(b.total)}</strong></div>`;document.getElementById('add-bouquet').disabled=b.count===0}
 function changeBouquet(id,delta){const p=product(id);if(!p)return;const n=Math.max(0,(bouquetQty[id]||0)+delta);if(n>p.stock)return toast('在庫数を超えています');bouquetQty[id]=n;renderBuilder()}
 function chooseWrap(id){selectedWrap=id;renderBuilder()}
