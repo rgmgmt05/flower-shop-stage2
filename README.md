@@ -155,3 +155,20 @@ node tests/test-frontend.mjs
 
 **本番ではない**: メールアドレス確認、パスワードリセット、登録・ログインの悪用対策、監査、支払の認証、注文通知、法務/個人情報保護の対処は後続作業。実在の個人情報や常用パスワードを登録しないこと。オンライン決済は未接続で、在庫が動く注文も模擬注文に限ります。
 
+
+## Stage 3B — accepted v0.2 storefront (development preview)
+
+Deployed at: https://flower-shop-stage3b-demo.rgmgmt05.workers.dev/
+
+- Customer home: `/`; shop `/?view=catalog`, examples `/?view=examples`, bouquet builder `/?view=builder`, cart `/?view=cart`, account `/?view=account`.
+- Staff: `/staff` (separate HTML, not in the customer navigation; staff API authorization remains mandatory).
+- Design starting point: Take You accepted wireframe `take_you_home_wireframe_v02.html`; keep 90px/82px header and fixed full-viewport placeholder background. Video asset is *not* supplied yet.
+- Catalog, stock, image assets, finished bouquets, order creation and account history use the Stage 3A Worker + shared D1/R2 API. Staff retains inventory/stock, photos and order processing.
+- Unconfirmed copy remains `ここにテキストを入力`; no invented sales slogans are shipped.
+- All orders are test orders. Guest checkout requires a demo invitation key, staff/customer creation requires the same private key, and checkout does **not** perform payment. An order does change shared demo inventory.
+- Demo inventory, photos and accounts are shared with the previous stage; separate Worker URL does not mean separate data.
+- Source: `public/index.html`, `public/storefront.css`, `public/storefront.js`, `public/staff.html`. `src/worker.js` serves `/staff`.
+- Automated tests: `node --check public/storefront.js`, `node --experimental-sqlite tests/test-api.mjs`, `node tests/test-stage3b.mjs`. Results in GitHub Actions.
+- Browser smoke checks verified 390px mobile header 82px, hero 844px, client page has no staff nav, six catalog products are returned and rendered, `/staff` serves a distinct management HTML.
+- Not production ready: full authentication security, email verification, real customer data handling, payment provider integration and notifications are pending. The video background is currently a static placeholder.
+
