@@ -105,7 +105,7 @@ function updateLineQty(index,raw,updateInput=false){
  cart=next;
  pendingId=crypto.randomUUID();$('receipt').hidden=true;
  updateTotals();renderProducts();
- const value=$('line-total-'+index);if(value)value.textContent=yen(lineTotal(line.kind?cart[index]:line));
+ const value=$('line-total-'+index);if(value)value.textContent=yen(lineTotal(cart[index]));
  if(!updateInput)renderCart();
  return true;
 }
@@ -117,6 +117,7 @@ function setPreset(raw){
  const n=Number(raw);
  if(String(raw).trim()===''||!Number.isInteger(n)||n<1||n>999)return false;
  preset=n;$('quick-qty').value=String(n);
+ if(catalog.products.length&&mode!=='bouquet')renderProducts();
  document.querySelectorAll('[data-preset]').forEach(btn=>{
   const selected=Number(btn.dataset.preset)===n;
   btn.classList.toggle('active',selected);btn.setAttribute('aria-pressed',String(selected));
@@ -140,7 +141,7 @@ function renderProducts(){
   const n=singleQuantity(p.id);
   const inOrder=n>0?'会計中 '+n+'本':'在庫 '+p.stock+'本';
   const amount=n>0?yen(n*p.price):'';
-  const canAdd=p.stock>0&&(currentDemand().get(p.id)||0)<p.stock;
+  const canAdd=p.stock>0&&(currentDemand().get(p.id)||0)+preset<=p.stock;
   return '<div class="product-tile '+(n?'selected':'')+'" data-tile-id="'+esc(p.id)+'">'+
    '<button class="product-add" data-add="'+esc(p.id)+'" type="button" '+(canAdd?'':'disabled')+' aria-label="'+esc(p.name)+'を'+preset+'本追加">'+
    '<span class="product-title">'+esc(p.name)+'</span>'+
@@ -240,6 +241,9 @@ function render(){
 function openCart(){
  cartOpen=true;document.body.classList.add('cart-open');$('cart-scrim').hidden=false;
  $('view-cart').setAttribute('aria-expanded','true');
+ if(typeof window!=='undefined'&&window.matchMedia&&!window.matchMedia('(max-width:760px)').matches){
+  closeCart();$('basket').scrollIntoView({behavior:'smooth',block:'nearest'});return;
+ }
  $('close-cart').focus();
 }
 function closeCart(){
@@ -280,7 +284,7 @@ $('quick-qty').addEventListener('change',e=>{
 });
 $('quick-qty').addEventListener('input',e=>{
  const value=e.target.value;
- if(value!==''&&/^\d+$/.test(value)){const n=Number(value);if(n>=1&&n<=999){preset=n;document.querySelectorAll('[data-preset]').forEach(b=>{const match=Number(b.dataset.preset)===n;b.classList.toggle('active',match);b.setAttribute('aria-pressed',String(match))});}}
+ if(value!==''&&/^\d+$/.test(value)){const n=Number(value);if(n>=1&&n<=999){preset=n;renderProducts();document.querySelectorAll('[data-preset]').forEach(b=>{const match=Number(b.dataset.preset)===n;b.classList.toggle('active',match);b.setAttribute('aria-pressed',String(match))});}}
 });
 $('wrap-id').addEventListener('change',renderBouquetSubtotal);
 $('bouquet-quantity').addEventListener('input',renderBouquetSubtotal);
