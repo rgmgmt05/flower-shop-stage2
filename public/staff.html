@@ -24,7 +24,7 @@ main{max-width:1220px;margin:auto;padding:30px 24px 90px}section.view{display:no
 </style>
 </head>
 <body>
-<header><div class="header-inner"><a class="brand" href="/staff">Take you<span>STORE MANAGEMENT · DEMO</span></a><nav><button data-nav="admin" onclick="navigate('admin')">店舗管理</button><button data-nav="account" onclick="navigate('account')">スタッフアカウント</button></nav></div></header>
+<header><div class="header-inner"><a class="brand" href="/staff">Take you<span>STORE MANAGEMENT · DEMO</span></a><nav><a href="/pos" style="display:inline-block;text-decoration:none;padding:12px 15px;font-size:14px;background:#31523e;color:#fff;border-radius:8px">レジを開く</a><button data-nav="admin" onclick="navigate('admin')">店舗管理</button><button data-nav="account" onclick="navigate('account')">スタッフアカウント</button></nav></div></header>
 <div class="demo-strip">Stage 3A 開発デモ｜決済なし・実名や実在の連絡先は入力しないでください。</div>
 <main>
 <section id="view-shop" class="view"><div class="hero"><div class="hero-copy"><div class="kicker">A small flower shop, thoughtfully made</div><h1>今日の一輪から、<br>自分だけの花束まで。</h1><p class="sub">切り花を1本から選べます。花束は花材・本数・包装を自由に組み合わせて。</p><div class="action-row"><button class="primary" onclick="navigate('builder')">花束をつくる →</button></div></div><div class="hero-art"><span>Flowers, your way.</span></div></div><div class="flex"><div><div class="kicker">Single stems</div><h2>今日の切り花</h2></div><span class="hint">商品と在庫は店舗管理から変更できます</span></div><div class="grid" id="product-grid"></div><div id="example-section" style="margin-top:45px"><div class="kicker">From our recent bouquets</div><h2>最近制作した花束から選ぶ</h2><p class="sub">実際に制作した花束をベースに、花材や包装を自由に変更できます。写真は完成例です。</p><div class="grid" id="example-grid"></div></div></section>
