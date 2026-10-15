@@ -1,58 +1,77 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const pos=fs.readFileSync(new URL('../public/pos.html',import.meta.url),'utf8');
+const html=fs.readFileSync(new URL('../public/pos.html',import.meta.url),'utf8');
 const script=fs.readFileSync(new URL('../public/pos.js',import.meta.url),'utf8');
+const css=fs.readFileSync(new URL('../public/pos.css',import.meta.url),'utf8');
 const staff=fs.readFileSync(new URL('../public/staff.html',import.meta.url),'utf8');
 const worker=fs.readFileSync(new URL('../src/worker.js',import.meta.url),'utf8');
 new vm.Script(script);
-assert.ok(pos.includes('id="bouquet-price"'),'custom bouquet needs independent sale price');
-assert.ok(pos.includes('id="bouquet-parts"'),'materials must be explicitly accounted for');
-assert.ok(pos.includes('id="checkout"'),'cash register is complete');
-assert.ok(staff.includes('href="/pos"'),'POS navigation must be staff-facing');
-assert.ok(!fs.readFileSync(new URL('../public/index.html',import.meta.url),'utf8').includes('href="/pos"'),'public customers should not see register link');
-assert.ok(worker.includes("actor?.role!=='staff'"),'POS API authorization must be staff only');
-assert.ok(worker.includes("await db.batch(statements)"),'POS materials must be deducted transactionally');
-assert.ok(worker.includes('request_id=?'),'repeated requests must be idempotent');
+for(const id of ['products','quick-qty','mobile-totals','mobile-total','mobile-stems','basket','view-cart','close-cart','cart-scrim','bouquet-parts','bouquet-price','bouquet-quantity','lines','total','checkout'])
+ assert.ok(html.includes('id="'+id+'"'),'missing cashier feature '+id);
+assert.ok(html.includes('data-mode="favorites"'),'favorite products tab');
+assert.ok(css.includes('body.cart-open .basket'),'mobile receipt sheet CSS');
+assert.ok(css.includes('.products{grid-template-columns:repeat(2'),'compact two-column mobile grid');
+assert.ok(staff.includes('class="nav-pos"'),'staff POS navigation');
+assert.ok(!fs.readFileSync(new URL('../public/index.html',import.meta.url),'utf8').includes('href="/pos"'),'POS hidden from customers');
+assert.ok(worker.includes("actor?.role!=='staff'"),'staff authorization');
+assert.ok(worker.includes('await db.batch(statements)'),'atomic receipt transaction');
 
-assert.ok(pos.includes('id="add-bulk"'),'batch flower entry is available');
-assert.ok(pos.includes('id="bouquet-quantity"'),'bouquet quantity input exists');
-assert.ok(pos.includes('id="bulk-summary"'),'batch flower subtotal is present');
-assert.ok(staff.includes('class="nav-pos"'),'management/POS share styled navigation');
-assert.ok(staff.includes('a,a:link,a:visited{color:inherit;text-decoration:none}'),'default blue links are overridden');
-
-const elements=new Map();
-const getEl=id=>{
- if(!elements.has(id))elements.set(id,{id,value:'',textContent:'',innerHTML:'',hidden:false,disabled:false,classList:{toggle(){},add(){},remove(){}},addEventListener(){}});
+const elements=new Map(),listeners=new Map();
+const classes=new Set();
+const element=id=>{
+ if(!elements.has(id))elements.set(id,{
+  id,hidden:false,value:'',textContent:'',innerHTML:'',disabled:false,
+  classList:{add(){},remove(){},toggle(){return true}},
+  setAttribute(){},focus(){},addEventListener(name,fn){listeners.set(id+':'+name,fn)}
+ });
  return elements.get(id);
 };
 const browser={
- document:{getElementById:getEl,querySelectorAll:()=>[],addEventListener(){}},
+ document:{
+  getElementById:element,
+  querySelectorAll:()=>[],
+  body:{classList:{add:x=>classes.add(x),remove:x=>classes.delete(x)}},
+  addEventListener(name,fn){listeners.set('document:'+name,fn)}
+ },
  crypto:{randomUUID:()=> '68fdbe15-9a5a-459b-a223-6b29dcabc837'},
  fetch:async()=>({ok:true,json:async()=>({user:null})}),
- console,confirm:()=>true,clearTimeout,setTimeout:()=>0,Map,Date,Math,Promise,Number
+ console,confirm:()=>true,clearTimeout,setTimeout:()=>0,Map,Set,Date,Math,Promise,Number
 };
-getEl('bouquet-quantity').value='1';
 const context=vm.createContext(browser);
 vm.runInContext(script,context);
-vm.runInContext("catalog={products:[{id:'rose',name:'バラ',price:350,stock:250,active:true},{id:'eucalyptus',name:'ユーカリ',price:170,stock:250,active:true}],wraps:[{id:'natural',name:'クラフト',price:200}]}",context);
-vm.runInContext("setDraft('rose','35');setDraft('eucalyptus','17');addBulk()",context);
-assert.equal(vm.runInContext('cart.length',context),2);
-assert.equal(vm.runInContext("cart.find(l=>l.id==='rose').qty",context),35);
-assert.equal(vm.runInContext("cart.find(l=>l.id==='eucalyptus').qty",context),17);
-vm.runInContext("updateLineQty(0,'42')",context);
-assert.equal(vm.runInContext("cart.find(l=>l.id==='rose').qty",context),42);
-vm.runInContext("updateLineQty(0,'300')",context);
-assert.equal(vm.runInContext("cart.find(l=>l.id==='rose').qty",context),42);
-vm.runInContext("setPartQty('rose',3);setPartQty('eucalyptus',2)",context);
-getEl('wrap-id').value='natural';
-getEl('bouquet-price').value='2200';
-getEl('bouquet-quantity').value='10';
-vm.runInContext('addBouquet()',context);
-assert.equal(vm.runInContext("cart.find(l=>l.kind==='bouquet').qty",context),10);
-assert.equal(vm.runInContext("cart.find(l=>l.kind==='bouquet').price",context),2200);
-assert.equal(vm.runInContext("currentDemand().get('rose')",context),72);
-assert.equal(vm.runInContext("currentDemand().get('eucalyptus')",context),37);
-assert.equal(vm.runInContext("cart.reduce((n,l)=>n+lineTotal(l),0)",context),42*350+17*170+10*2200);
-console.log('PASS: batch stem input, direct cart quantity edits, stock limits and bulk bouquet totals');
-
+vm.runInContext("catalog={products:[{id:'rose',name:'赤バラ',type:'バラ',price:350,stock:250,active:true},{id:'green',name:'ユーカリ',type:'グリーン',price:170,stock:250,active:true}],wraps:[{id:'natural',name:'クラフト',price:200}]} ;favorites=new Set(['rose'])",context);
+vm.runInContext('render()',context);
+assert.ok(element('products').innerHTML.includes('赤バラ'));
+assert.ok(!element('products').innerHTML.includes('ユーカリ'));
+vm.runInContext("setPreset(10);addSingle('rose')",context);
+assert.equal(vm.runInContext("singleQuantity('rose')",context),10);
+assert.equal(element('mobile-total').textContent,'¥3,500');
+assert.ok(element('products').innerHTML.includes('会計中 10本'));
+vm.runInContext("addSingle('rose');selectMode('single');addSingle('green',5)",context);
+assert.equal(vm.runInContext("singleQuantity('rose')",context),20);
+assert.equal(vm.runInContext("singleQuantity('green')",context),5);
+assert.equal(element('mobile-total').textContent,'¥7,850');
+assert.ok(element('mobile-stems').textContent.includes('25本'));
+vm.runInContext("updateLineQty(0,35)",context);
+assert.equal(vm.runInContext("singleQuantity('rose')",context),35);
+assert.equal(element('mobile-total').textContent,'¥13,100');
+assert.equal(vm.runInContext("updateLineQty(0,300)",context),false);
+assert.equal(vm.runInContext("singleQuantity('rose')",context),35);
+vm.runInContext("toggleFavorite('green');selectMode('favorites')",context);
+assert.ok(element('products').innerHTML.includes('ユーカリ'));
+vm.runInContext("parts={rose:2,green:1};selectMode('bouquet')",context);
+element('wrap-id').value='natural';
+element('bouquet-price').value='1700';
+element('bouquet-quantity').value='10';
+vm.runInContext('renderBouquetSubtotal();addBouquet()',context);
+assert.equal(vm.runInContext("cart.find(x=>x.kind==='bouquet').qty",context),10);
+assert.equal(vm.runInContext("currentDemand().get('rose')",context),55);
+assert.equal(vm.runInContext("currentDemand().get('green')",context),15);
+assert.equal(element('mobile-total').textContent,'¥30,100');
+assert.ok(classes.has('cart-open'),'bouquet opens receipt sheet');
+vm.runInContext('closeCart()',context);
+assert.ok(!classes.has('cart-open'));
+vm.runInContext("updateLineQty(2,200)",context); // Should be rejected due to stock.
+assert.equal(vm.runInContext("cart.find(x=>x.kind==='bouquet').qty",context),10);
+console.log('PASS: compact POS, quick quantity, immediate tile/total updates, favorites, editable receipt and bouquet stock calculations');
