@@ -1,8 +1,8 @@
 /* Take you staff PWA. Cache only public static app shells, never API, cookies or transaction results. */
 'use strict';
-const CACHE='take-you-staff-shell-v4-20261015-7';
+const CACHE='take-you-staff-shell-v4-20261015-8';
 const PREFIX='take-you-staff-shell-';
-const SHELL=['/pos','/staff','/pos.js','/pos.css','/staff-shell.css','/staff-pwa.js','/staff.webmanifest','/icons/staff-192.png','/icons/staff-512.png'];
+const SHELL=['/pos','/staff','/pos.js','/pos.css','/staff-shell-v8.css','/staff-pwa.js','/staff.webmanifest','/icons/staff-192.png','/icons/staff-512.png'];
 const paths=new Set(SHELL);
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
@@ -13,6 +13,7 @@ self.addEventListener('install',event=>{
     if(response.ok)await cache.put(path,response);
    }catch(err){ /* Optional offline shell: installing works even if a resource fetch fails. */ }
   }
+  await self.skipWaiting();
  })());
 });
 self.addEventListener('activate',event=>{
@@ -48,12 +49,17 @@ self.addEventListener('fetch',event=>{
   })());
   return;
  }
+ // Always prefer online content to prevent outdated layouts and scripts.
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE);
-  const cached=await cache.match(url.pathname);
-  if(cached)return cached;
-  const response=await fetch(request);
-  if(response.ok)await cache.put(url.pathname,response.clone());
-  return response;
+  try{
+   const response=await fetch(request,{cache:'no-store'});
+   if(response.ok)await cache.put(url.pathname,response.clone());
+   return response;
+  }catch(err){
+   const cached=await cache.match(url.pathname);
+   if(cached)return cached;
+   return new Response('通信が必要です。インターネット接続を確認してください。',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
+  }
  })());
 });
