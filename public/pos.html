@@ -14,11 +14,9 @@
 <div class="left">
 <div class="tabs" role="tablist" aria-label="商品種別"><button type="button" data-mode="single" class="active">切り花</button><button type="button" data-mode="bouquet">花束</button></div>
 <section id="single-panel">
-<div class="section-topline"><div><h2>切り花をまとめて入力</h2><p class="hint">必要な本数を直接入力。複数種類をまとめて追加できます。</p></div><label class="short-label">各商品の入力をクリア<button type="button" class="light small" id="clear-quantities">入力を消す</button></label></div>
+<div class="section-topline"><div><h2>切り花</h2><p class="hint">本数の入力・+1で会計に即反映</p></div></div>
 <input class="search" id="filter" placeholder="花材名で絞り込み" aria-label="花材名で検索">
-<div class="bulk-head"><span>商品</span><span>本数</span></div>
-<div id="products" class="products"></div>
-<div class="bulk-actions"><p id="bulk-summary" aria-live="polite">本数を入力してください</p><button type="button" class="primary" id="add-bulk">入力した切り花をまとめて追加</button></div>
+<div id="products" class="products" aria-label="切り花一覧"></div><p id="bulk-summary" class="entry-summary" aria-live="polite">切り花 0本</p>
 </section>
 <section id="bouquet-panel" hidden>
 <h2>花束の構成</h2><p class="hint">花束1点あたりの花材の本数を入力。複数点の場合は同じ構成をまとめて登録できます。</p>
@@ -26,11 +24,20 @@
 <div class="actions"><button id="suggest-price" type="button" class="light">参考価格を入力</button><button id="add-bouquet" type="button" class="primary">花束を会計に追加</button></div>
 </section>
 </div>
-<aside class="basket"><div class="basket-head"><h2>会計内容</h2><span class="pill" id="cart-lines-count">0品目</span></div><div id="lines" class="lines"></div>
+<aside class="basket" id="basket"><div class="basket-head"><h2>会計内容</h2><span class="pill" id="cart-lines-count">0品目</span></div><div id="lines" class="lines"></div>
 <div class="sum"><span>合計</span><strong id="total">¥0</strong></div>
 <label class="paylabel">支払方法<select id="payment"><option value="cash">現金（受領確認）</option><option value="external">外部端末（決済確認済）</option></select></label>
 <div class="actions"><button id="clear" class="light" type="button">会計をクリア</button><button id="checkout" class="primary" type="button" disabled>会計を確定する</button></div>
 <div id="receipt" role="status" aria-live="polite" hidden></div></aside></div>
 <section class="recent"><h2>最近の店頭会計</h2><div id="recent"></div></section>
 </section>
-</main><div id="toast" role="status" aria-live="polite" hidden></div><script src="/pos.js" defer></script></body></html>
+</main>
+<div id="mobile-totals" class="mobile-totals" hidden>
+ <div class="mobile-totals-info">
+  <span class="mobile-totals-caption">会計に入っている商品 <span id="mobile-stems">0本 / 0点</span></span>
+  <strong id="mobile-total">¥0</strong>
+  <span id="draft-preview" hidden></span>
+ </div>
+ <button type="button" id="view-cart" class="mobile-cart-button">会計を見る <span aria-hidden="true">→</span></button>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div><script src="/pos.js" defer></script></body></html>
