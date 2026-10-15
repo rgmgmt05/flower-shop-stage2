@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Take you | レジ</title><link rel="stylesheet" href="/pos.css"></head>
+<body>
+<header class="bar"><div><a href="/pos" class="logo">Take you</a><span class="sub">店頭レジ · テスト環境</span></div><nav><a href="/staff">在庫・注文管理</a><button id="signout" hidden>ログアウト</button></nav></header>
+<main>
+<div id="loading" class="notice">レジを読み込み中…</div>
+<section id="auth" hidden class="auth"><h1>スタッフログイン</h1><p>スタッフアカウントでログインしてください。初回登録は管理画面から行えます。</p>
+<form id="login-form"><label>メールアドレス<input type="email" id="email" autocomplete="username" required></label>
+<label>パスワード<input type="password" id="password" autocomplete="current-password" required></label><button class="primary">ログイン</button></form>
+<p><a href="/staff">初回スタッフ登録 →</a></p></section>
+<section id="pos" hidden><div class="heading"><h1>レジ</h1><span id="staff-label"></span></div><p class="notice small">試験運用：現金・外部決済の受領を確認した時点で会計を確定してください。会計確定で在庫を減算します。</p>
+<div class="layout">
+<div class="left">
+<div class="tabs"><button type="button" data-mode="single" class="active">切り花</button><button type="button" data-mode="bouquet">花束をつくる</button></div>
+<section id="single-panel">
+<input class="search" id="filter" placeholder="花材名で検索" aria-label="花材名で検索">
+<div id="products" class="products"></div>
+</section>
+<section id="bouquet-panel" hidden>
+<h2>使用する花材</h2><p class="hint">実際に使った花材と本数を入力します。花束の売価は自由に設定できます。</p>
+<div id="bouquet-parts"></div><div class="fieldrow"><label>包装<select id="wrap-id"></select></label><label>花束の売価（税込・円）<input id="bouquet-price" type="number" min="0" max="10000000" step="1" inputmode="numeric"></label></div>
+<div class="actions"><button id="suggest-price" type="button" class="light">参考価格を入力</button><button id="add-bouquet" type="button" class="primary">花束を会計に追加</button></div>
+</section>
+</div>
+<aside class="basket"><h2>会計内容</h2><div id="lines" class="lines"></div>
+<div class="sum"><span>合計</span><strong id="total">¥0</strong></div>
+<label class="paylabel">支払方法<select id="payment"><option value="cash">現金（受領確認）</option><option value="external">外部端末（決済確認済）</option></select></label>
+<div class="actions"><button id="clear" class="light" type="button">会計をクリア</button><button id="checkout" class="primary" type="button" disabled>会計を確定する</button></div>
+<div id="receipt" role="status" aria-live="polite" hidden></div></aside></div>
+<section class="recent"><h2>最近の店頭会計</h2><div id="recent"></div></section>
+</section>
+</main><div id="toast" role="status" aria-live="polite" hidden></div><script src="/pos.js" defer></script></body></html>
