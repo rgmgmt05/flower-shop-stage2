@@ -64,6 +64,13 @@ assert.equal(vm.runInContext("singleQuantity('rose')",context),35);
 vm.runInContext("toggleFavorite('green');selectMode('favorites')",context);
 assert.ok(element('products').innerHTML.includes('ユーカリ'));
 vm.runInContext("parts={rose:2,green:1};selectMode('bouquet')",context);
+
+vm.runInContext("catalog.products[0].imageId='rose-photo';renderParts()",context);
+assert.ok(element('bouquet-parts').innerHTML.includes('/api/media/rose-photo'),'bouquet materials show registered photo');
+assert.ok(element('bouquet-parts').innerHTML.includes('写真未登録'),'unphotographed flower has explicit placeholder');
+assert.ok(element('bouquet-parts').innerHTML.includes('バラ · ¥350 / 本 · 在庫 250'),'bouquet material variant and price retained');
+assert.ok(element('bouquet-parts').innerHTML.includes('data-part-qty="rose"'),'quantity input retained');
+
 element('wrap-id').value='natural';
 element('bouquet-price').value='1700';
 element('bouquet-quantity').value='10';
