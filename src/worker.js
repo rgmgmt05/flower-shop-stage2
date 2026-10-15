@@ -352,10 +352,16 @@ async function completePosSale(db,actor,v){
    const amount=p.price*line.qty;
    total+=amount;items.push({kind:'single',title:p.name,qty:line.qty,unitPrice:p.price,total:amount,parts:[{id:p.id,qty:line.qty}]});
   }else if(line?.kind==='bouquet'){
-   if(!Array.isArray(line.parts)||!line.parts.length||line.parts.length>60||!Number.isInteger(line.price)||line.price<0||line.price>10000000)throw new Error('花束の価格・花材を確認してください');
+   const bouquetQty=line.qty==null?1:line.qty;
+   if(!Number.isInteger(bouquetQty)||bouquetQty<1||bouquetQty>999||!Array.isArray(line.parts)||!line.parts.length||line.parts.length>60||!Number.isInteger(line.price)||line.price<0||line.price>10000000)throw new Error('花束の価格・本数・花材を確認してください');
    if(line.wrapId!=null&&!byWrap.has(line.wrapId))throw new Error('包装を確認してください');
-   const parts=line.parts.map(x=>{const p=consume(x.id,x.qty);return {id:p.id,name:p.name,qty:x.qty}});
-   total+=line.price;items.push({kind:'bouquet',title:'花束',qty:1,total:line.price,wrapId:line.wrapId||null,parts});
+   const parts=line.parts.map(x=>{
+    if(!Number.isInteger(x.qty)||x.qty<1||x.qty>999||x.qty*bouquetQty>999999)throw new Error('花材の使用本数を確認してください');
+    const p=consume(x.id,x.qty*bouquetQty);
+    return {id:p.id,name:p.name,qty:x.qty};
+   });
+   const amount=line.price*bouquetQty;
+   total+=amount;items.push({kind:'bouquet',title:'花束',qty:bouquetQty,unitPrice:line.price,total:amount,wrapId:line.wrapId||null,parts});
   }else throw new Error('商品形式を確認してください');
  }
  if(total>10000000)throw new Error('会計金額の上限を超えています');
