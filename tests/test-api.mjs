@@ -184,3 +184,35 @@ assert.equal(invalidLine.status,400);
 const noStaff=await worker.fetch(new Request('https://demo.example/api/pos/sales'),env);
 assert.equal(noStaff.status,403);
 console.log('PASS: POS在庫一括減算、即興花束の自由価格、会計再送の重複防止、在庫不足ロールバック、スタッフ権限');
+
+
+const bulkId='a844e05f-5db5-4685-831c-c0e297b47e01';
+const beforeBulk=(await req('/api/admin/state')).data.products;
+const beforeQty=id=>beforeBulk.find(p=>p.id===id).stock;
+const bulkBouquets=await req('/api/pos/sales','POST',{
+ requestId:bulkId,paymentMethod:'external',lines:[
+  {kind:'single',id:'tulip',qty:3},
+  {kind:'bouquet',qty:10,parts:[{id:'gerbera',qty:1},{id:'green',qty:1}],wrapId:'white',price:1800}
+ ]
+});
+assert.equal(bulkBouquets.status,201,JSON.stringify(bulkBouquets));
+assert.equal(bulkBouquets.data.total,3*280+10*1800);
+let afterBulk=(await req('/api/admin/state')).data.products;
+assert.equal(afterBulk.find(p=>p.id==='gerbera').stock,beforeQty('gerbera')-10);
+assert.equal(afterBulk.find(p=>p.id==='green').stock,beforeQty('green')-10);
+assert.equal(afterBulk.find(p=>p.id==='tulip').stock,beforeQty('tulip')-3);
+const bulkRepeat=await req('/api/pos/sales','POST',{
+ requestId:bulkId,paymentMethod:'external',lines:[{kind:'single',id:'tulip',qty:3}]
+});
+assert.equal(bulkRepeat.status,201);
+assert.equal(bulkRepeat.data.alreadyProcessed,true);
+assert.equal((await req('/api/admin/state')).data.products.find(p=>p.id==='green').stock,beforeQty('green')-10);
+assert.equal((await req('/api/pos/sales','GET')).data.sales.length,2);
+const bulkShortage=await req('/api/pos/sales','POST',{
+ requestId:'d7c11fe0-25a4-4dca-98ce-d7ed46cf8821',
+ paymentMethod:'cash',
+ lines:[{kind:'bouquet',qty:200,parts:[{id:'gerbera',qty:2}],price:1400,wrapId:'natural'}]
+});
+assert.equal(bulkShortage.status,409);
+assert.equal((await req('/api/pos/sales','GET')).data.sales.length,2);
+console.log('PASS: 10点の同一花束を一括販売・花材在庫10倍減算・再送防止・在庫不足一括取消');
