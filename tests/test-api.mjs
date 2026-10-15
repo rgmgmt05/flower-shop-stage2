@@ -2,6 +2,11 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import worker from '../src/worker.js';
+const source=fs.readFileSync(new URL('../src/worker.js',import.meta.url),'utf8');
+const pbkdf2Rounds=Number(source.match(/const PWD_ROUNDS=(\d+);/)?.[1]);
+assert.ok(Number.isInteger(pbkdf2Rounds)&&pbkdf2Rounds>=1&&pbkdf2Rounds<=100000,
+ 'Cloudflare Workers requires PBKDF2 iterations at most 100000');
+
 
 class MockDB {
  constructor(){this.db=new DatabaseSync(':memory:');this.db.exec('PRAGMA foreign_keys=ON;');this.db.exec(fs.readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0002_images_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0003_completed_bouquets.sql',import.meta.url),'utf8'));this.db.exec(fs.readFileSync(new URL('../migrations/0004_accounts.sql',import.meta.url),'utf8'))}
