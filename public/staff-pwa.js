@@ -6,7 +6,7 @@
  const help=document.getElementById('install-help');
  const offline=document.getElementById('offline-staff-banner');
  const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
- let installEvent=null,registration=null;
+ let installEvent=null,registration=null,updateRequested=false;
  function showOffline(){
   const isOffline=!navigator.onLine;
   if(offline)offline.hidden=!isOffline;
@@ -33,14 +33,14 @@
   });
  }
  if(update)update.addEventListener('click',()=>{
-  if(registration?.waiting)registration.waiting.postMessage({type:'ACTIVATE_UPDATE'});
+  if(registration?.waiting){updateRequested=true;registration.waiting.postMessage({type:'ACTIVATE_UPDATE'});}
  });
  function promptUpdate(reg){
   if(update&&reg.waiting&&navigator.serviceWorker.controller)update.hidden=false;
  }
  if('serviceWorker' in navigator){
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
-   if(!window.__takeYouReloading){window.__takeYouReloading=true;window.location.reload();}
+   if(updateRequested&&!window.__takeYouReloading){window.__takeYouReloading=true;window.location.reload();}
   });
   navigator.serviceWorker.register('/staff-sw.js',{scope:'/',updateViaCache:'none'})
    .then(reg=>{
