@@ -47,8 +47,8 @@ function card(p,preview=false){
 function renderPreview(){
  const active=catalog.products.filter(p=>p.active);
  $('product-grid').innerHTML=active.slice(0,3).map(p=>card(p,true)).join('')||'<p class="blank">商品はまだ登録されていません。</p>';
- const sample=catalog.templates.find(t=>t.imageId);
- $('bouquet-preview').innerHTML=sample?'<img loading="lazy" src="'+image(sample.imageId)+'" alt="'+esc(sample.name)+'">':'花束写真';
+ /* Stage 3B preview: do not automatically promote unverified test images to the home hero. */
+ $('bouquet-preview').textContent='花束写真';
  $('cart-count').textContent=cart.length;
 }
 function renderCatalog(){
