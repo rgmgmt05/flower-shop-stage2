@@ -295,7 +295,13 @@ async function saveTemplate(db,v){
 export default {
   async fetch(request,env){
     const url=new URL(request.url),path=url.pathname;
-    if(!path.startsWith('/api/'))return env.ASSETS.fetch(request);
+    if(!path.startsWith('/api/')){
+      if((path==='/staff'||path==='/staff/')&&(['GET','HEAD'].includes(request.method))){
+        const staffUrl=new URL('/staff.html',url);
+        return env.ASSETS.fetch(new Request(staffUrl,request));
+      }
+      return env.ASSETS.fetch(request);
+    }
     if(!env.DB)return fail('D1接続が設定されていません',503);
     try{
       if(path==='/api/catalog'&&request.method==='GET')return response(await catalog(env.DB));
