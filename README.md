@@ -194,3 +194,17 @@ Preview: https://flower-shop-stage3c-ux-demo.rgmgmt05.workers.dev/
 - Automated tests: `tests/test-pos.mjs` executes bulk cashier interactions, `tests/test-api.mjs` verifies 10 identical bouquets and transactional inventory deduction. GitHub Actions `stage3c-pos-ux.yml`.
 - This preview and previous Stage 3C are different Workers pointing to the same development database. It is not live payment processing; cashier staff must independently confirm receiving cash or processing payment outside this system.
 - Background video and customer site are unchanged. Do not use actual customer information in the demo.
+
+## Stage 3C POS-native layout — mobile product selection and receipt
+
+Preview: https://flower-shop-stage3c-pos-demo.rgmgmt05.workers.dev/pos
+
+Layout based on official Airレジ, Square POS, Shopify POS, and Loyverse workflow references rather than a custom all-rows quantity table:
+- Mobile (<761px): compact 2-column item tiles, `よく使う / 切り花 / 花束をつくる` modes, search and *quantity-before-product* presets (1, 5, 10 or manually entered). Tapping a tile adds that number immediately; each selected tile displays the quantity and SKU subtotal.
+- Persistent mobile footer displays **current order** quantities and total. It opens a full-screen receipt sheet with editable line quantity, delete, payment confirmation and staff-only checkout. A draft bouquet is explicitly marked as *not yet added* in the footer.
+- Tablet/PC: product selection and receipt are simultaneous adjacent panes.
+- Favorite SKUs are saved in localStorage, first four active items initially pinned when there is no saved preference. This is per browser/device, not shared staff data.
+- Bespoke bouquet builder remains separate: each material and quantity per bouquet, optional wrapping, independently specified sale price and quantity of identical bouquets.
+- POS APIs and inventory transactions remain from Stage 3C and require staff authentication. Sales on this development preview deduct **shared demo** inventory; payment collection itself is still external/manual. Earlier demos have not been modified.
+- Tests: Node vm POS interface checks, live inventory API tests including multiplication for 10 bouquets, Stage 3B regression and Cloudflare mobile browser inspections.
+- Actual login with a specific staff account, live card payments, receipt printing and fiscal workflows require separate end-to-end/production validation.
