@@ -1,6 +1,6 @@
 /* Take you staff PWA. Cache only public static app shells, never API, cookies or transaction results. */
 'use strict';
-const CACHE='take-you-staff-shell-v4-20261015-4';
+const CACHE='take-you-staff-shell-v4-20261015-5';
 const PREFIX='take-you-staff-shell-';
 const SHELL=['/pos','/staff','/pos.js','/pos.css','/staff-shell.css','/staff-pwa.js','/staff.webmanifest','/icons/staff-192.png','/icons/staff-512.png'];
 const paths=new Set(SHELL);
