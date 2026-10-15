@@ -184,3 +184,13 @@ Deployed at: https://flower-shop-stage3b-demo.rgmgmt05.workers.dev/
 - Test data are shared with the previous stages; demo sale *actually reduces the demo inventory*. Never use the production shop's real amounts or customer details.
 - Pre-assembled bouquets that consumed inventory before sale will need their own "prepare finished goods" flow: do not subtract the constituent flowers again at POS. This first POS model covers bouquets assembled at the time of checkout and loose flowers.
 - Before real use: cash received/change, receipts and tax configuration, refunds/void, end-of-day closure, accounting exports, offline mode, production-grade staff identity, and optional card-terminal integration remain unimplemented.
+
+## Stage 3C UX: high-quantity POS + polished staff portal
+
+Preview: https://flower-shop-stage3c-ux-demo.rgmgmt05.workers.dev/
+- `/pos`: direct quantity fields for multiple cut-flower SKUs; batch add, immediate batch subtotal, editable cart quantities. In the bouquet builder choose materials per bouquet, an editable sale price and an integer number of identical bouquets. Material quantities and receipt totals multiply correctly.
+- `/staff`: restrained management UI and cohesive header design, including explicitly styled navigation links instead of blue browser defaults.
+- `src/worker.js` computes totals and material consumption on the server, applies them in D1 atomic batches and deduplicates by sale request ID. Previous inventory and API models remain shared.
+- Automated tests: `tests/test-pos.mjs` executes bulk cashier interactions, `tests/test-api.mjs` verifies 10 identical bouquets and transactional inventory deduction. GitHub Actions `stage3c-pos-ux.yml`.
+- This preview and previous Stage 3C are different Workers pointing to the same development database. It is not live payment processing; cashier staff must independently confirm receiving cash or processing payment outside this system.
+- Background video and customer site are unchanged. Do not use actual customer information in the demo.
