@@ -5,6 +5,13 @@ const html=fs.readFileSync(new URL('../public/index.html',import.meta.url),'utf8
 const js=fs.readFileSync(new URL('../public/storefront.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../public/storefront.css',import.meta.url),'utf8');
 const staff=fs.readFileSync(new URL('../public/staff.html',import.meta.url),'utf8');
+const staffJs=staff.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+assert.ok(staffJs,'staff script is present');
+new vm.Script(staffJs);
+assert.ok(staffJs.includes("if(count)count.textContent=cart.length"),'staff render must not depend on a removed cart badge');
+assert.ok(staffJs.includes("if(authUser?.role==='staff')navigate('admin')"),'staff login should open management');
+assert.ok(!staff.match(/<header[\s\S]*?<\/header>/)?.[0].includes('data-nav="shop"'),'staff header should not expose storefront');
+
 new vm.Script(js);
 assert.ok(html.includes('class="video-background"'),'accepted full-page v0.2 background');
 assert.ok(html.includes('class="film-section"'),'v0.2 film overlay');
@@ -12,6 +19,8 @@ assert.ok(html.includes('ここにテキストを入力'),'copy stays unspecifie
 assert.ok(!/<header[\s\S]*?<\/header>/.exec(html)?.[0].includes('店舗管理'),'staff link must not appear in customer header');
 assert.ok(staff.includes('id="view-admin"'),'staff stock UI intact');
 assert.ok(css.includes('.subpage'),'functional app screens inherit minimal style');
+assert.ok(css.includes('.bouquet-image img{display:block;width:100%;height:100%;object-fit:cover}'),'preview image cannot overflow');
+assert.ok(js.includes("$('bouquet-preview').textContent='花束写真'"),'unverified photos stay out of hero');
 const nodes=new Map();
 function element(id){
  if(!nodes.has(id))nodes.set(id,{id,innerHTML:'',textContent:'',hidden:false,classList:{toggle(){},add(){},remove(){}},style:{},setAttribute(){},getAttribute(){return ''},value:'',disabled:false});
