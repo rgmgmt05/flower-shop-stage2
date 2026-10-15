@@ -1,0 +1,28 @@
+/* One shared staff app header: same navigation, alignment and active states on POS & admin. */
+.staff-shell-header{position:sticky;top:0;z-index:35;background:#fff;border-bottom:1px solid #dbe3da;box-shadow:0 1px 3px #15291b09;color:#26382d;min-height:70px}
+.staff-shell-inner{max-width:1390px;margin:0 auto;padding:0 clamp(16px,3vw,38px);min-height:70px;display:grid;grid-template-columns:minmax(155px,1fr) auto minmax(155px,1fr);align-items:center;column-gap:14px}
+.staff-shell-brand,.staff-shell-brand:link,.staff-shell-brand:visited{display:block;justify-self:start;color:#2e503d!important;text-decoration:none;font:normal 23px/1.16 Georgia,"Yu Mincho",serif;letter-spacing:.12em;white-space:nowrap}
+.staff-shell-brand small{display:block;font:9px/1.5 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#79897c;letter-spacing:.15em;margin-top:3px}
+.staff-main-nav{display:flex;align-items:center;gap:4px;padding:3px;border-radius:7px;background:#f0f3ef;flex-wrap:nowrap}
+.staff-main-nav .staff-main-link,.staff-main-nav .staff-main-link:visited{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:96px;padding:8px 16px;border-radius:5px;background:transparent;color:#526758!important;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap}
+.staff-main-nav .staff-main-link.is-active,.staff-main-nav .staff-main-link.is-active:visited{background:#315443;color:#fff!important}
+.staff-main-nav .staff-main-link:not(.is-active):hover{background:#e2eae1}
+.staff-shell-actions{display:flex;align-items:center;justify-self:end;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.staff-shell-actions .staff-account-link,.staff-shell-actions .staff-account-link:visited{display:inline-flex;align-items:center;padding:9px 10px;border-radius:5px;color:#4b5f51!important;text-decoration:none;font-size:12px;font-weight:500;white-space:nowrap;min-height:39px}
+.staff-shell-actions .staff-account-link:hover,.staff-shell-actions .staff-account-link.is-active{background:#edf2eb;color:#315443!important}
+.staff-shell-actions button{min-height:39px;border-radius:5px;font-size:11px;padding:7px 10px}
+.staff-shell-actions #signout{background:transparent;border:1px solid #dbe3da;color:#536758}
+.staff-shell-actions #signout:hover{background:#eff4ee}
+.staff-shell-actions [hidden]{display:none!important}
+@media(max-width:760px){
+ .staff-shell-header{min-height:0}
+ .staff-shell-inner{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"brand actions" "tabs tabs";gap:8px 8px;min-height:0;padding:9px 14px 10px}
+ .staff-shell-brand{grid-area:brand;font-size:20px!important}
+ .staff-shell-brand small{font-size:8px;letter-spacing:.1em}
+ .staff-shell-actions{grid-area:actions;min-width:0;gap:4px}
+ .staff-shell-actions .staff-account-link{padding:6px 8px;font-size:11px;min-height:34px}
+ .staff-shell-actions button{padding:6px 8px;min-height:34px;font-size:10px}
+ .staff-shell-actions #signout{display:none}
+ .staff-main-nav{grid-area:tabs;width:100%;gap:4px}
+ .staff-main-nav .staff-main-link{min-width:0;flex:1;min-height:38px;font-size:12px}
+}
