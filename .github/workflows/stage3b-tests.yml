@@ -1,0 +1,20 @@
+name: Stage 3B tests
+on:
+  push:
+    branches:
+      - stage3b/design-v02
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check public/storefront.js
+      - run: node --experimental-sqlite tests/test-api.mjs
+      - run: node tests/test-stage3b.mjs
