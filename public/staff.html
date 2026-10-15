@@ -107,6 +107,23 @@ footer{background:#f5f5f1;border-top:1px solid #dce2da;color:#7e897d}
  .bar nav{flex-wrap:wrap;justify-content:flex-end;gap:7px}
 }
 
+
+/* Bouquet flower lookup: compact SKU photo + name/details + quantity. */
+.builder-item{grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center}
+.staff-flower-thumb{display:flex;align-items:center;justify-content:center;width:52px;height:52px;background:#f1f3ef;border:1px solid #e0e6db;border-radius:5px;overflow:hidden;text-align:center;color:#798478;font-size:9px;line-height:1.35;flex-shrink:0}
+.staff-flower-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.staff-flower-details{min-width:0;overflow-wrap:anywhere}
+.staff-flower-details strong{font-size:13px;line-height:1.5}
+.staff-flower-details .meta{font-size:11px;color:#798478;line-height:1.6}
+@media(max-width:760px){
+ .builder-item{grid-template-columns:46px minmax(0,1fr) auto;gap:8px}
+ .staff-flower-thumb{width:46px;height:46px}
+ .builder-item .meta{grid-column:auto}
+ .builder-item .counter{gap:4px}
+ .builder-item .counter button{width:32px;height:34px}
+}
+@media(max-width:360px){.staff-flower-thumb{width:40px;height:40px}.builder-item{grid-template-columns:40px minmax(0,1fr) auto;gap:5px}}
+
 </style>
 <link rel="stylesheet" href="/staff-shell.css">
 </head>
@@ -246,7 +263,12 @@ function loadTemplate(id){
 }
 function addSingle(id){const p=product(id);if(!p||p.stock<1)return toast('在庫がありません');cart.push({kind:'single',id,qty:1});toast(p.name+'を追加しました');render()}
 function builderTotal(){let sub=0,count=0;for(const [id,q] of Object.entries(bouquetQty)){const p=product(id);if(p&&q>0){sub+=p.price*q;count+=q}}return {sub,count,wrapPrice:wrap(selectedWrap)?.price??0,total:sub+(count>0?500+(wrap(selectedWrap)?.price??0):0)}}
-function renderBuilder(){document.getElementById('builder-flowers').innerHTML=state.products.filter(p=>p.active).map(p=>`<div class="line builder-item"><div><strong>${esc(p.icon)} ${esc(p.name)}</strong><div class="meta">残 ${p.stock}本</div></div><div class="meta">${money(p.price)}/本</div><div class="counter"><button onclick="changeBouquet('${p.id}',-1)" aria-label="${esc(p.name)}を減らす">−</button><b>${bouquetQty[p.id]||0}</b><button onclick="changeBouquet('${p.id}',1)" aria-label="${esc(p.name)}を増やす" ${p.stock<=0?'disabled':''}>＋</button></div></div>`).join('');document.getElementById('wrap-options').innerHTML=state.wraps.map(w=>`<button class="wrap-choice ${w.id===selectedWrap?'selected':''}" onclick="chooseWrap('${w.id}')"><span style="font-size:28px">${esc(w.icon)}</span><strong>${esc(w.name)}</strong>${money(w.price)}</button>`).join('');const b=builderTotal();const selected=Object.entries(bouquetQty).filter(([id,q])=>q>0&&product(id)).map(([id,q])=>`<div class="flex line"><span>${esc(product(id).name)} × ${q}</span><span>${money(product(id).price*q)}</span></div>`).join('');document.getElementById('bouquet-summary').innerHTML=(selected||'<p class="hint">花材を選ぶとここに表示されます。</p>')+(b.count>0?`<div class="flex line"><span>包装：${esc(wrap(selectedWrap)?.name)}</span><span>${money(b.wrapPrice)}</span></div><div class="flex line"><span>制作料（仮）</span><span>${money(500)}</span></div>`:'')+`<div class="flex line"><strong>合計</strong><strong class="summary-total">${money(b.total)}</strong></div>`;document.getElementById('add-bouquet').disabled=b.count===0}
+function staffFlowerThumb(p){
+ return '<span class="staff-flower-thumb">'+(p.imageId
+  ?'<img loading="lazy" src="'+photoOf(p.imageId)+'" alt="" onerror="this.parentElement.textContent=\'写真未登録\'">'
+  :'写真未登録')+'</span>';
+}
+function renderBuilder(){document.getElementById('builder-flowers').innerHTML=state.products.filter(p=>p.active).map(p=>`<div class="line builder-item">${staffFlowerThumb(p)}<div class="staff-flower-details"><strong>${esc(p.name)}</strong><div class="meta">${p.type?esc(p.type)+' · ':''}${money(p.price)}/本 · 在庫 ${p.stock}</div></div><div class="counter"><button onclick="changeBouquet('${p.id}',-1)" aria-label="${esc(p.name)}を減らす">−</button><b>${bouquetQty[p.id]||0}</b><button onclick="changeBouquet('${p.id}',1)" aria-label="${esc(p.name)}を増やす" ${p.stock<=0?'disabled':''}>＋</button></div></div>`).join('');document.getElementById('wrap-options').innerHTML=state.wraps.map(w=>`<button class="wrap-choice ${w.id===selectedWrap?'selected':''}" onclick="chooseWrap('${w.id}')"><span style="font-size:28px">${esc(w.icon)}</span><strong>${esc(w.name)}</strong>${money(w.price)}</button>`).join('');const b=builderTotal();const selected=Object.entries(bouquetQty).filter(([id,q])=>q>0&&product(id)).map(([id,q])=>`<div class="flex line"><span>${esc(product(id).name)} × ${q}</span><span>${money(product(id).price*q)}</span></div>`).join('');document.getElementById('bouquet-summary').innerHTML=(selected||'<p class="hint">花材を選ぶとここに表示されます。</p>')+(b.count>0?`<div class="flex line"><span>包装：${esc(wrap(selectedWrap)?.name)}</span><span>${money(b.wrapPrice)}</span></div><div class="flex line"><span>制作料（仮）</span><span>${money(500)}</span></div>`:'')+`<div class="flex line"><strong>合計</strong><strong class="summary-total">${money(b.total)}</strong></div>`;document.getElementById('add-bouquet').disabled=b.count===0}
 function changeBouquet(id,delta){const p=product(id);if(!p)return;const n=Math.max(0,(bouquetQty[id]||0)+delta);if(n>p.stock)return toast('在庫数を超えています');bouquetQty[id]=n;renderBuilder()}
 function chooseWrap(id){selectedWrap=id;renderBuilder()}
 function resetBuilder(){bouquetQty={};selectedWrap=state.wraps[0].id;renderBuilder()}
