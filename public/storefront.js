@@ -135,14 +135,24 @@ async function checkout(){
 }
 async function refresh(){
  try{
-  const [data,auth]=await Promise.all([api('/api/catalog'),api('/api/auth/me')]);
-  catalog=data;user=auth.user;
+  catalog=await api('/api/catalog');
   if(!wrapId)wrapId=catalog.wraps[0]?.id||'';
+  renderPreview();
+  renderBuilder();
+  navigate(new URLSearchParams(location.search).get('view')||'home',false);
+ }catch(e){
+  $('product-grid').textContent='商品データの取得に失敗しました。';
+  feedback(e.message,true);
+ }
+ try{
+  const auth=await api('/api/auth/me');
+  user=auth.user;
   if(user?.role==='customer')await loadOrders();else orders=[];
-  renderPreview();renderBuilder();
-  const route=new URLSearchParams(location.search).get('view')||'home';
-  navigate(route,false);
- }catch(e){feedback(e.message,true)}
+  if(new URLSearchParams(location.search).get('view')==='account')renderAccount();
+  if(new URLSearchParams(location.search).get('view')==='cart')renderCart();
+ }catch(e){
+  user=null;
+ }
 }
 async function loadOrders(){
  try{const r=await api('/api/account/orders');orders=r.orders||[]}catch(e){orders=[]}
