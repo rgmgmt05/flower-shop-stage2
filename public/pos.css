@@ -212,3 +212,16 @@ main{max-width:1390px;margin:auto;padding:25px clamp(16px,3vw,38px) 65px}
  .bouquet-step input{width:37px}
  .bouquet-step button{width:26px}
 }
+
+
+/* Existing SKU icon provides a recognizable fallback until its real photo is added. */
+.flower-thumb,.builder-flower-thumb,.staff-flower-thumb{position:relative}
+.flower-thumb img,.builder-flower-thumb img,.staff-flower-thumb img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover}
+.thumb-symbol{display:grid;place-items:center;width:100%;height:100%;font-size:27px;line-height:1}
+.tone-coral{background:#f2e3df}
+.tone-white{background:#f6f4ec}
+.tone-yellow{background:#f2efd8}
+.tone-lilac{background:#eae4f0}
+.tone-green{background:#e5eee4}
+.tone-neutral{background:#eef1eb}
+@media(max-width:760px){.thumb-symbol{font-size:24px}}
