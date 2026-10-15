@@ -73,7 +73,7 @@
         <div class="basket-head"><div><span class="eyebrow">CURRENT ORDER</span><h2>注文一覧</h2></div><button id="close-cart" class="close-cart" type="button" aria-label="商品選択に戻る"><span aria-hidden="true">←</span> 戻る</button></div>
         <div id="cart-lines-count" class="cart-lines-count">0品目</div>
         <div id="lines" class="lines"></div>
-        <div class="basket-summary"><div class="sum"><span>合計金額</span><strong id="total">¥0</strong></div>
+        <div class="basket-summary"><div class="sum"><span>合計金額</span><div class="amount-and-last"><strong id="total">¥0</strong><span id="last-action" class="last-action" aria-live="polite">直近：—</span></div></div>
           <label class="paylabel">支払方法<select id="payment"><option value="cash">現金（受領確認）</option><option value="external">外部端末（決済確認済）</option></select></label>
           <div class="checkout-actions"><button id="clear" class="light" type="button">クリア</button><button id="checkout" class="primary" type="button" disabled>会計を確定</button></div>
           <div id="receipt" role="status" aria-live="polite" hidden></div>
@@ -84,7 +84,7 @@
   </section>
 </main>
 <div id="mobile-totals" class="mobile-totals" hidden>
-  <div class="mobile-totals-info"><span id="mobile-stems" class="mobile-stems">0本・花束0点</span><strong id="mobile-total">¥0</strong><span id="draft-preview" class="draft-preview" hidden></span></div>
+  <div class="mobile-totals-info"><span id="mobile-stems" class="mobile-stems">0本・花束0点</span><div class="mobile-amount-and-last"><strong id="mobile-total">¥0</strong><span id="mobile-last-action" class="last-action" aria-live="polite">直近：—</span></div><span id="draft-preview" class="draft-preview" hidden></span></div>
   <button type="button" id="view-cart" class="mobile-cart-button">注文一覧 <span aria-hidden="true">→</span></button>
 </div>
 <div id="toast" role="status" aria-live="polite" hidden></div>
