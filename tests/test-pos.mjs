@@ -12,7 +12,7 @@ for(const id of ['products','quick-qty','mobile-totals','mobile-total','last-act
 assert.ok(html.includes('data-mode="favorites"'),'favorite products tab');
 assert.ok(css.includes('body.cart-open .basket'),'mobile receipt sheet CSS');
 assert.ok(css.includes('.products{grid-template-columns:repeat(2'),'compact two-column mobile grid');
-assert.ok(staff.includes('class="nav-pos"'),'staff POS navigation');
+assert.ok(staff.includes('class="staff-main-link" href="/pos"')||staff.includes('href="/pos" class="staff-main-link"'),'staff POS navigation');
 assert.ok(!fs.readFileSync(new URL('../public/index.html',import.meta.url),'utf8').includes('href="/pos"'),'POS hidden from customers');
 assert.ok(worker.includes("actor?.role!=='staff'"),'staff authorization');
 assert.ok(worker.includes('await db.batch(statements)'),'atomic receipt transaction');
