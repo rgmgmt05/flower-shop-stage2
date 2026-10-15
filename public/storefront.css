@@ -72,3 +72,4 @@ body.mode-subpage .video-background{visibility:hidden}
  #toast{left:23px;right:23px;bottom:23px;max-width:none}
  .site-footer .foot-nav{margin-top:36px}
 }
+\n@media(max-width:700px){.sub-grid .product:nth-child(3){display:block}.site-nav .nav-link{display:none}}\n
