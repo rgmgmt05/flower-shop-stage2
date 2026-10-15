@@ -78,3 +78,23 @@ html,body{max-width:100%;overflow-x:clip}
 .bouquet-panel,.bouquet-image,.product,.item-image{min-width:0}
 .bouquet-image{overflow:hidden}
 .bouquet-image img{display:block;width:100%;height:100%;object-fit:cover}
+
+
+/* Bouquet material selector: existing product photos make varieties identifiable. */
+.builder-flower{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center}
+.builder-flower-thumb{width:58px;height:58px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f1f2ed;border:1px solid #dfe4d9;color:#83877e;font-size:10px;line-height:1.4;text-align:center}
+.builder-flower-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.builder-flower-details{min-width:0;overflow-wrap:anywhere}
+.builder-flower-details strong{display:block;line-height:1.5}
+.builder-flower-details small{line-height:1.55}
+@media(max-width:700px){
+ .builder-flower{grid-template-columns:48px minmax(0,1fr) auto;gap:8px;align-items:center}
+ .builder-flower-thumb{width:48px;height:48px;font-size:9px}
+ .builder-flower .plain-counter{gap:6px}
+ .builder-flower .plain-counter button{width:34px;height:36px}
+}
+@media(max-width:355px){
+ .builder-flower{grid-template-columns:40px minmax(0,1fr) auto;gap:5px}
+ .builder-flower-thumb{width:40px;height:40px}
+ .builder-flower .plain-counter button{width:30px}
+}
