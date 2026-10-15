@@ -73,3 +73,8 @@ body.mode-subpage .video-background{visibility:hidden}
  .site-footer .foot-nav{margin-top:36px}
 }
 \n@media(max-width:700px){.sub-grid .product:nth-child(3){display:block}.site-nav .nav-link{display:none}}\n
+/* Prevent untrusted demo media from expanding the mobile document width. */
+html,body{max-width:100%;overflow-x:clip}
+.bouquet-panel,.bouquet-image,.product,.item-image{min-width:0}
+.bouquet-image{overflow:hidden}
+.bouquet-image img{display:block;width:100%;height:100%;object-fit:cover}
