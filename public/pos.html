@@ -1,43 +1,93 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Take you | レジ</title><link rel="stylesheet" href="/pos.css"></head>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f8f8f5">
+<title>Take you | 店頭レジ</title>
+<link rel="stylesheet" href="/pos.css">
+</head>
 <body>
-<header class="bar"><div><a href="/pos" class="logo">Take you</a><span class="sub">店頭レジ · テスト環境</span></div><nav><a href="/staff">在庫・注文管理</a><button id="signout" hidden>ログアウト</button></nav></header>
+<header class="bar">
+  <div class="bar-brand"><a href="/pos" class="logo">Take you</a><span class="sub">STORE POS · DEMO</span></div>
+  <nav aria-label="スタッフ用ナビゲーション"><a href="/staff">店舗管理</a><button id="signout" type="button" hidden>ログアウト</button></nav>
+</header>
 <main>
-<div id="loading" class="notice">レジを読み込み中…</div>
-<section id="auth" hidden class="auth"><h1>スタッフログイン</h1><p>スタッフアカウントでログインしてください。初回登録は管理画面から行えます。</p>
-<form id="login-form"><label>メールアドレス<input type="email" id="email" autocomplete="username" required></label>
-<label>パスワード<input type="password" id="password" autocomplete="current-password" required></label><button class="primary">ログイン</button></form>
-<p><a href="/staff">初回スタッフ登録 →</a></p></section>
-<section id="pos" hidden><div class="heading"><h1>レジ</h1><span id="staff-label"></span></div><p class="notice small">試験運用：現金・外部決済の受領を確認した時点で会計を確定してください。会計確定で在庫を減算します。</p>
-<div class="layout">
-<div class="left">
-<div class="tabs" role="tablist" aria-label="商品種別"><button type="button" data-mode="single" class="active">切り花</button><button type="button" data-mode="bouquet">花束</button></div>
-<section id="single-panel">
-<div class="section-topline"><div><h2>切り花</h2><p class="hint">本数の入力・+1で会計に即反映</p></div></div>
-<input class="search" id="filter" placeholder="花材名で絞り込み" aria-label="花材名で検索">
-<div id="products" class="products" aria-label="切り花一覧"></div><p id="bulk-summary" class="entry-summary" aria-live="polite">切り花 0本</p>
-</section>
-<section id="bouquet-panel" hidden>
-<h2>花束の構成</h2><p class="hint">花束1点あたりの花材の本数を入力。複数点の場合は同じ構成をまとめて登録できます。</p>
-<div id="bouquet-parts"></div><div class="fieldrow"><label>包装<select id="wrap-id"></select></label><label>花束1点の売価（税込・円）<input id="bouquet-price" type="number" min="0" max="10000000" step="1" inputmode="numeric"></label><label>同じ構成の花束を何点作るか<input id="bouquet-quantity" type="number" min="1" max="999" step="1" inputmode="numeric" value="1"></label></div><p class="hint" id="bouquet-subtotal"></p>
-<div class="actions"><button id="suggest-price" type="button" class="light">参考価格を入力</button><button id="add-bouquet" type="button" class="primary">花束を会計に追加</button></div>
-</section>
-</div>
-<aside class="basket" id="basket"><div class="basket-head"><h2>会計内容</h2><span class="pill" id="cart-lines-count">0品目</span></div><div id="lines" class="lines"></div>
-<div class="sum"><span>合計</span><strong id="total">¥0</strong></div>
-<label class="paylabel">支払方法<select id="payment"><option value="cash">現金（受領確認）</option><option value="external">外部端末（決済確認済）</option></select></label>
-<div class="actions"><button id="clear" class="light" type="button">会計をクリア</button><button id="checkout" class="primary" type="button" disabled>会計を確定する</button></div>
-<div id="receipt" role="status" aria-live="polite" hidden></div></aside></div>
-<section class="recent"><h2>最近の店頭会計</h2><div id="recent"></div></section>
-</section>
+  <div id="loading" class="notice">読み込み中</div>
+  <section id="auth" hidden class="auth">
+    <p class="eyebrow">STAFF ACCESS</p>
+    <h1>スタッフログイン</h1>
+    <p>レジはスタッフアカウントで利用します。初回登録は店舗管理画面から行います。</p>
+    <form id="login-form">
+      <label>メールアドレス<input id="email" type="email" autocomplete="username" required></label>
+      <label>パスワード<input id="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">ログイン</button>
+    </form>
+    <p><a href="/staff">スタッフ初回登録 →</a></p>
+  </section>
+  <section id="pos" hidden>
+    <div class="page-heading">
+      <div><p class="eyebrow">CHECKOUT</p><h1>店頭レジ</h1></div>
+      <div id="staff-label" class="staff-label"></div>
+    </div>
+    <div class="demo-message">テスト環境：支払確認後に会計を確定してください。決済処理は行わず、デモ在庫が減算されます。</div>
+    <div class="layout">
+      <section class="selection" aria-label="商品選択">
+        <div class="mode-tabs" role="tablist" aria-label="商品選択モード">
+          <button type="button" data-mode="favorites" class="active" aria-selected="true">よく使う</button>
+          <button type="button" data-mode="single" aria-selected="false">切り花</button>
+          <button type="button" data-mode="bouquet" aria-selected="false">花束をつくる</button>
+        </div>
+        <section id="single-panel" aria-label="切り花選択">
+          <div class="search-and-qty">
+            <label class="search-wrap"><span class="sr-only">商品検索</span><span class="search-icon" aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="花材を検索" autocomplete="off"></label>
+            <div class="preset-block" aria-label="次に追加する数量">
+              <span class="preset-caption">追加する本数</span>
+              <div class="qty-presets">
+                <button type="button" data-preset="1" class="active" aria-pressed="true">1</button>
+                <button type="button" data-preset="5" aria-pressed="false">5</button>
+                <button type="button" data-preset="10" aria-pressed="false">10</button>
+                <label class="custom-preset"><span class="sr-only">任意の本数</span><input id="quick-qty" aria-label="次に追加する本数" type="number" inputmode="numeric" min="1" max="999" step="1" value="1"></label>
+              </div>
+            </div>
+          </div>
+          <div class="catalog-bar"><span id="catalog-label">よく使う花材</span><span id="selection-count">0種類選択中</span></div>
+          <div id="products" class="products" aria-label="切り花商品"></div>
+          <p class="catalog-hint">商品タイルをタップすると、上で指定した本数が会計に追加されます。★で「よく使う」を編集できます。</p>
+          <p id="bulk-summary" class="sr-only" aria-live="polite"></p>
+        </section>
+        <section id="bouquet-panel" hidden aria-label="花束作成">
+          <div class="bouquet-heading"><h2>花束の構成</h2><p>花束1点の花材を入力し、点数と売価を指定します。</p></div>
+          <div id="bouquet-parts" class="bouquet-parts"></div>
+          <div class="bouquet-fields">
+            <label>包装<select id="wrap-id"></select></label>
+            <label>1点の売価（円）<input id="bouquet-price" type="number" min="0" max="10000000" step="1" inputmode="numeric" placeholder="売価を入力"></label>
+            <label>同じ花束の点数<input id="bouquet-quantity" type="number" min="1" max="999" step="1" inputmode="numeric" value="1"></label>
+          </div>
+          <div id="bouquet-subtotal" class="bouquet-subtotal" aria-live="polite">花材を選択してください</div>
+          <div class="bouquet-actions"><button id="suggest-price" class="light" type="button">参考価格</button><button id="add-bouquet" class="primary" type="button">花束を伝票に追加</button></div>
+        </section>
+      </section>
+      <div id="cart-scrim" class="cart-scrim" hidden></div>
+      <aside id="basket" class="basket" aria-label="注文伝票">
+        <div class="basket-head"><div><span class="eyebrow">CURRENT ORDER</span><h2>注文一覧</h2></div><button id="close-cart" class="close-cart" type="button" aria-label="商品選択に戻る"><span aria-hidden="true">←</span> 戻る</button></div>
+        <div id="cart-lines-count" class="cart-lines-count">0品目</div>
+        <div id="lines" class="lines"></div>
+        <div class="basket-summary"><div class="sum"><span>合計金額</span><strong id="total">¥0</strong></div>
+          <label class="paylabel">支払方法<select id="payment"><option value="cash">現金（受領確認）</option><option value="external">外部端末（決済確認済）</option></select></label>
+          <div class="checkout-actions"><button id="clear" class="light" type="button">クリア</button><button id="checkout" class="primary" type="button" disabled>会計を確定</button></div>
+          <div id="receipt" role="status" aria-live="polite" hidden></div>
+        </div>
+      </aside>
+    </div>
+    <details class="recent"><summary>最近の店頭会計</summary><div id="recent"></div></details>
+  </section>
 </main>
 <div id="mobile-totals" class="mobile-totals" hidden>
- <div class="mobile-totals-info">
-  <span class="mobile-totals-caption">会計に入っている商品 <span id="mobile-stems">0本 / 0点</span></span>
-  <strong id="mobile-total">¥0</strong>
-  <span id="draft-preview" hidden></span>
- </div>
- <button type="button" id="view-cart" class="mobile-cart-button">会計を見る <span aria-hidden="true">→</span></button>
+  <div class="mobile-totals-info"><span id="mobile-stems" class="mobile-stems">0本・花束0点</span><strong id="mobile-total">¥0</strong><span id="draft-preview" class="draft-preview" hidden></span></div>
+  <button type="button" id="view-cart" class="mobile-cart-button">注文一覧 <span aria-hidden="true">→</span></button>
 </div>
-<div id="toast" role="status" aria-live="polite" hidden></div><script src="/pos.js" defer></script></body></html>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/pos.js" defer></script>
+</body>
+</html>
