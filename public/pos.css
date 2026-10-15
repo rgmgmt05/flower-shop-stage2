@@ -180,3 +180,15 @@ main{max-width:1390px;margin:auto;padding:25px clamp(16px,3vw,38px) 65px}
  .mobile-amount-and-last .last-action{font-size:9px}
  .amount-and-last{gap:7px}
 }
+
+
+/* Staff app status and install controls */
+.install-pwa,.update-pwa{border:1px solid #b6cbbb!important;background:#e8f1e8!important;color:#315443!important;min-height:37px;padding:7px 10px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap}
+.offline-staff-banner{border-bottom:1px solid #dbbf96;background:#fff3db;color:#775628;font-size:12px;padding:10px clamp(14px,3vw,38px);text-align:center;font-weight:600}
+.install-help{border-bottom:1px solid #cadbc9;background:#edf4ec;color:#34523d;font-size:12px;line-height:1.75;padding:10px clamp(14px,3vw,38px)}
+.staff-offline #checkout{opacity:.35;pointer-events:none}
+@media(max-width:760px){
+ .install-pwa,.update-pwa{font-size:10px;padding:6px}
+ .bar{height:auto;min-height:62px}
+ .bar nav{flex-wrap:wrap;justify-content:flex-end;gap:7px}
+}
