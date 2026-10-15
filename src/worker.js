@@ -19,7 +19,8 @@ async function requireDemo(request,env) {
 // operational privacy safeguards, and a payment provider before production.
 const SESSION_COOKIE='__Host-flower_session';
 const SEVEN_DAYS=604800;
-const PWD_ROUNDS=120000;
+// Cloudflare Workers Web Crypto PBKDF2 permits at most 100,000 iterations.
+const PWD_ROUNDS=100000;
 function authError(message='ログインしてください',status=401){return Object.assign(new Error(message),{status})}
 const fromHex=hex=>new Uint8Array(hex.match(/../g).map(x=>parseInt(x,16)));
 const toHex=bytes=>Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');
