@@ -1,0 +1,56 @@
+{
+  "id": "/take-you-staff",
+  "name": "Take you 店舗管理・レジ",
+  "short_name": "Take you",
+  "description": "Take you 店舗レジ・在庫・注文管理",
+  "start_url": "/pos",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
+  "background_color": "#f6f7f3",
+  "theme_color": "#2e503d",
+  "lang": "ja",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/staff-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/staff-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "レジ",
+      "short_name": "レジ",
+      "url": "/pos",
+      "icons": [
+        {
+          "src": "/icons/staff-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "在庫・注文管理",
+      "short_name": "管理",
+      "url": "/staff",
+      "icons": [
+        {
+          "src": "/icons/staff-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
