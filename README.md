@@ -223,3 +223,11 @@ Preview: https://flower-shop-stage4-pwa-demo.rgmgmt05.workers.dev/pos
 - Existing demo users and D1 inventory are shared with Stage 3C; staff registration/login remains required. This is a demo with **no integrated real payment, refunds, accounting, or offline selling**.
 - Automated tests: `node tests/test-stage4.mjs`; workflow `stage4-staff-pwa.yml`; prior cashier / inventory suites continue.
 - This is an **installable web app** and not a native Android/iOS app-store package.
+
+### Stage 4 shared navigation (2026-10-15)
+
+- POS and management share the same header structure and `public/staff-shell.css`: exact `レジ` (`/pos`) and `店舗管理` (`/staff`) links, consistent selected tab highlighting, `アカウント` route and PWA controls.
+- Both screens use normal browser/PWA route navigation, not a mixture of route navigation and a one-page tab button. Management's internal account route is addressable as `/staff?view=account`.
+- The POS preserves an unpaid cart in `sessionStorage`, associated with the current authenticated staff ID and revalidated against the latest stock on return from management. It is removed when the sale is confirmed or the user logs out.
+- `staff-shell.css` was added to Service Worker shell caching with bumped cache version `take-you-staff-shell-v4-20261015-2`.
+- Existing install users may need to select the app's update button or close/reopen it to activate the updated Service Worker. This does not change actual payment integration or the shared demo inventory.
