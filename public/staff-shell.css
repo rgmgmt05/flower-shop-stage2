@@ -28,6 +28,8 @@
 }
 
 
+/* Reserve a classic-scrollbar gutter on both screens so desktop tabs never jump horizontally. */
+html{scrollbar-gutter:stable}
 /* Make the navigation clearly actionable and stable when switching screens. */
 .staff-main-nav{
  background:#eef2ed;
