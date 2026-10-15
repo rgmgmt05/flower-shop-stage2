@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const yen=v=>'¥'+Number(v||0).toLocaleString('ja-JP');
-let catalog={products:[],wraps:[]},cart=[],parts={},mode='single',pendingId=crypto.randomUUID(),user=null;
+let catalog={products:[],wraps:[]},cart=[],parts={},drafts={},mode='single',pendingId=crypto.randomUUID(),user=null;
 const prod=id=>catalog.products.find(p=>p.id===id);
 const getWrap=id=>catalog.wraps.find(w=>w.id===id);
 async function request(path,method='GET',body){
@@ -35,55 +35,122 @@ async function login(){
   catalog=await request('/api/catalog');showPos();
  }catch(e){notice(e.message)}
 }
-function addSingle(id){
- const p=prod(id);if(!p||!p.active||p.stock<1)return;
- let line=cart.find(l=>l.kind==='single'&&l.id===id);
- if(line){if(line.qty>=p.stock)return notice('在庫を確認してください');line.qty++}
- else cart.push({kind:'single',id,qty:1});
- resetPending();render();
+
+function currentDemand(lines=cart){
+ const amounts=new Map();
+ for(const line of lines){
+  const n=line.kind==='single'?line.qty:(line.qty||1);
+  const materials=line.kind==='single'?[{id:line.id,qty:1}]:line.parts;
+  for(const x of materials)amounts.set(x.id,(amounts.get(x.id)||0)+x.qty*n);
+ }
+ return amounts;
 }
-function adjustSingle(id,delta){
- const p=prod(id),line=cart.find(l=>l.kind==='single'&&l.id===id);
- if(!line)return;line.qty+=delta;
- if(line.qty<1)cart=cart.filter(l=>l!==line);
- else if(p&&line.qty>p.stock)line.qty=p.stock;
- resetPending();render();
+function validateCart(lines){
+ if(lines.length>40)return '1回の会計は40品目までです';
+ const demand=currentDemand(lines);
+ for(const [id,qty] of demand){
+  const p=prod(id);if(!p||!p.active||qty>p.stock)return (p?.name||'花材')+'の在庫を確認してください';
+ }
+ return null;
+}
+function changeSingle(id,qty){
+ const p=prod(id),n=Number(qty);
+ if(!p||!p.active||!Number.isInteger(n)||n<1||n>999)return notice('切り花の本数を確認してください');
+ const next=cart.map(x=>({...x}));
+ const existing=next.find(l=>l.kind==='single'&&l.id===id);
+ if(existing)existing.qty+=n;else next.push({kind:'single',id,qty:n});
+ const issue=validateCart(next);
+ if(issue)return notice(issue);
+ cart=next;resetPending();renderCart();
+}
+function addSingle(id){changeSingle(id,1)}
+function addBulk(){
+ const batch=Object.entries(drafts).filter(([id,q])=>Number(q)>0&&prod(id));
+ if(!batch.length)return notice('花材の本数を入力してください');
+ const next=cart.map(x=>({...x}));
+ for(const [id,raw] of batch){
+  const qty=Number(raw);
+  if(!Number.isInteger(qty)||qty<1||qty>999)return notice('1種類あたり1〜999本で入力してください');
+  const current=next.find(l=>l.kind==='single'&&l.id===id);
+  if(current)current.qty+=qty;else next.push({kind:'single',id,qty});
+ }
+ const issue=validateCart(next);if(issue)return notice(issue);
+ cart=next;drafts={};resetPending();render();
+ notice(batch.length+'種類を会計に追加しました');
+}
+function updateBulkSummary(){
+ const chosen=Object.entries(drafts).filter(([id,q])=>Number(q)>0&&prod(id));
+ const stems=chosen.reduce((n,[id,q])=>n+Number(q),0);
+ const total=chosen.reduce((n,[id,q])=>n+Number(q)*prod(id).price,0);
+ $('bulk-summary').textContent=chosen.length?chosen.length+'種類 / '+stems+'本 / '+yen(total):'本数を入力してください';
+}
+function setDraft(id,raw){
+ if(!prod(id))return;
+ if(raw.trim()===''){delete drafts[id];updateBulkSummary();return}
+ const qty=Number(raw);
+ if(!Number.isInteger(qty)||qty<0||qty>999){notice('本数は0〜999で入力してください');return}
+ drafts[id]=qty;updateBulkSummary();
+}
+function updateLineQty(index,raw){
+ const line=cart[index],n=Number(raw);
+ if(!line||!Number.isInteger(n)||n<1||n>999){renderCart();return notice('数量は1〜999で入力してください')}
+ const next=cart.map(x=>({...x}));
+ next[index].qty=n;
+ const issue=validateCart(next);if(issue){renderCart();return notice(issue)}
+ cart=next;resetPending();renderCart();
 }
 function adjustPart(id,delta){
  const p=prod(id);if(!p)return;
- const next=(parts[id]||0)+delta;
- if(next<0||next>p.stock)return notice('在庫を確認してください');
- if(next)parts[id]=next;else delete parts[id];
- renderParts();
+ const n=(parts[id]||0)+delta;
+ setPartQty(id,n);
+}
+function setPartQty(id,n){
+ const p=prod(id);if(!p)return;
+ if(!Number.isInteger(n)||n<0||n>999||n>p.stock)return notice(p.name+'の本数を確認してください');
+ if(n)parts[id]=n;else delete parts[id];
+ renderParts();renderBouquetSubtotal();
+}
+function renderBouquetSubtotal(){
+ const qty=Number($('bouquet-quantity').value||1);
+ const price=Number($('bouquet-price').value||0);
+ $('bouquet-subtotal').textContent=Object.keys(parts).length+'種類の花材 · '+(Number.isInteger(qty)&&qty>0?qty:0)+'点 · 売上 '+yen((Number.isInteger(qty)&&qty>0?qty:0)*price);
 }
 function suggestedPrice(){
  const subtotal=Object.entries(parts).reduce((s,[id,n])=>s+(prod(id)?.price||0)*n,0);
  return subtotal+500+(getWrap($('wrap-id').value)?.price||0);
 }
+
 function addBouquet(){
- const price=Number($('bouquet-price').value);
+ const price=Number($('bouquet-price').value),qty=Number($('bouquet-quantity').value);
  if(!Object.keys(parts).length)return notice('花材を選んでください');
- if($('bouquet-price').value===''||!Number.isInteger(price)||price<0||price>10000000)return notice('売価を入力してください');
- cart.push({kind:'bouquet',parts:Object.entries(parts).map(([id,qty])=>({id,qty})),wrapId:$('wrap-id').value||null,price});
- parts={};$('bouquet-price').value='';resetPending();render();selectMode('single');
+ if($('bouquet-price').value===''||!Number.isInteger(price)||price<0||price>10000000)return notice('花束1点の売価を入力してください');
+ if(!Number.isInteger(qty)||qty<1||qty>999)return notice('花束の点数は1〜999で入力してください');
+ const next=[...cart,{kind:'bouquet',parts:Object.entries(parts).map(([id,qty])=>({id,qty})),wrapId:$('wrap-id').value||null,price,qty}];
+ const issue=validateCart(next);if(issue)return notice(issue);
+ if(next.reduce((t,l)=>t+lineTotal(l),0)>10000000)return notice('1会計の上限額を超えています');
+ cart=next;
+ parts={};$('bouquet-price').value='';$('bouquet-quantity').value='1';resetPending();render();selectMode('single');
+ notice('花束を'+qty+'点追加しました');
 }
-function lineTotal(line){return line.kind==='single'?(prod(line.id)?.price||0)*line.qty:line.price}
+function lineTotal(line){return line.kind==='single'?(prod(line.id)?.price||0)*line.qty:line.price*(line.qty||1)}
 function renderProducts(){
  const filter=$('filter').value.toLowerCase().trim();
  $('products').innerHTML=catalog.products.filter(p=>p.active&&p.name.toLowerCase().includes(filter))
-  .map(p=>'<button class="product" type="button" data-add="'+esc(p.id)+'" '+(p.stock<=0?'disabled':'')+'><strong>'+esc(p.name)+'</strong><span>'+yen(p.price)+' / 本　 在庫 '+p.stock+'</span></button>').join('')||'<p>商品がありません。</p>';
+  .map(p=>'<div class="bulk-row"><div class="bulk-product"><strong>'+esc(p.name)+'</strong><small>'+yen(p.price)+' / 本　　在庫 '+p.stock+'</small></div><div class="bulk-quantity"><input aria-label="'+esc(p.name)+'の本数" data-bulk-id="'+esc(p.id)+'" type="number" min="0" max="'+Math.min(999,p.stock)+'" step="1" inputmode="numeric" placeholder="0" value="'+(drafts[p.id]||'')+'" '+(p.stock<=0?'disabled':'')+'><button class="light add-one" type="button" data-add="'+esc(p.id)+'" '+(p.stock<=0?'disabled':'')+' aria-label="'+esc(p.name)+'を1本追加">+1</button></div></div>').join('')||'<p class="hint">商品がありません。</p>';
+ updateBulkSummary();
 }
 function renderParts(){
- $('bouquet-parts').innerHTML=catalog.products.filter(p=>p.active).map(p=>'<div class="row"><div><strong>'+esc(p.name)+'</strong><small>'+yen(p.price)+' / 本　 在庫 '+p.stock+'</small></div><div class="q"><button data-part="'+esc(p.id)+'" data-delta="-1">−</button><span>'+(parts[p.id]||0)+'</span><button data-part="'+esc(p.id)+'" data-delta="1" '+((parts[p.id]||0)>=p.stock?'disabled':'')+'>＋</button></div></div>').join('');
+ $('bouquet-parts').innerHTML=catalog.products.filter(p=>p.active).map(p=>'<div class="bulk-row bouquet-row"><div class="bulk-product"><strong>'+esc(p.name)+'</strong><small>'+yen(p.price)+' / 本　 在庫 '+p.stock+'</small></div><div class="q"><button type="button" data-part="'+esc(p.id)+'" data-delta="-1" aria-label="'+esc(p.name)+'を減らす">−</button><input aria-label="'+esc(p.name)+'の使用本数" type="number" inputmode="numeric" min="0" max="'+Math.min(999,p.stock)+'" step="1" data-part-qty="'+esc(p.id)+'" value="'+(parts[p.id]||0)+'"><button type="button" data-part="'+esc(p.id)+'" data-delta="1" '+((parts[p.id]||0)>=p.stock?'disabled':'')+' aria-label="'+esc(p.name)+'を増やす">＋</button></div></div>').join('');
 }
+
 function renderCart(){
- const itemHtml=cart.map((l,i)=>{
- const title=l.kind==='single'?prod(l.id)?.name||'商品':'即興花束';
- const detail=l.kind==='single'?'本数 '+l.qty+'本':l.parts.map(x=>(prod(x.id)?.name||'花材')+' × '+x.qty).join(' / ');
- return '<div class="row"><div><strong>'+esc(title)+'</strong><small>'+esc(detail)+'</small><button class="light" type="button" data-remove="'+i+'">削除</button></div><strong>'+yen(lineTotal(l))+'</strong></div>'
- }).join('');
- $('lines').innerHTML=itemHtml||'<p class="hint">販売する商品を選んでください。</p>';
+ $('lines').innerHTML=cart.map((line,i)=>{
+ const title=line.kind==='single'?prod(line.id)?.name||'商品':'即興花束';
+ const detail=line.kind==='single'?yen(prod(line.id)?.price)+' / 本':line.parts.map(x=>(prod(x.id)?.name||'花材')+' × '+x.qty).join(' / ')+' · '+yen(line.price)+' / 点';
+ return '<div class="cart-row"><div class="cart-row-head"><strong>'+esc(title)+'</strong><button class="remove" type="button" data-remove="'+i+'">削除</button></div><small>'+esc(detail)+'</small><div class="cart-row-bottom"><label>数量 <input type="number" inputmode="numeric" min="1" max="999" step="1" value="'+(line.qty||1)+'" data-cart-qty="'+i+'" aria-label="'+esc(title)+'の販売数量"></label><strong>'+yen(lineTotal(line))+'</strong></div></div>';
+ }).join('')||'<p class="hint">販売する商品を選んでください。</p>';
  $('total').textContent=yen(cart.reduce((a,l)=>a+lineTotal(l),0));
+ $('cart-lines-count').textContent=cart.length+'品目';
  $('checkout').disabled=cart.length===0;
 }
 function render(){
@@ -91,7 +158,7 @@ function render(){
  const before=$('wrap-id').value;
  $('wrap-id').innerHTML=catalog.wraps.map(w=>'<option value="'+esc(w.id)+'">'+esc(w.name)+'（'+yen(w.price)+'）</option>').join('');
  if(catalog.wraps.some(w=>w.id===before))$('wrap-id').value=before;
- renderCart();
+ renderCart();renderBouquetSubtotal();
 }
 function selectMode(m){
  mode=m;document.querySelectorAll('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===m));
@@ -122,6 +189,17 @@ $('suggest-price').addEventListener('click',()=>{$('bouquet-price').value=String
 $('add-bouquet').addEventListener('click',addBouquet);
 $('checkout').addEventListener('click',checkout);
 $('clear').addEventListener('click',()=>{cart=[];resetPending();renderCart()});
+$('clear-quantities').addEventListener('click',()=>{drafts={};renderProducts()});
+$('add-bulk').addEventListener('click',addBulk);
+$('bouquet-price').addEventListener('input',renderBouquetSubtotal);
+$('bouquet-quantity').addEventListener('input',renderBouquetSubtotal);
+document.addEventListener('change',e=>{
+ const line=e.target.closest('[data-cart-qty]');if(line){updateLineQty(Number(line.dataset.cartQty),line.value);return}
+ const part=e.target.closest('[data-part-qty]');if(part){const n=part.value.trim()===''?0:Number(part.value);setPartQty(part.dataset.partQty,n);return}
+});
+document.addEventListener('input',e=>{
+ const item=e.target.closest('[data-bulk-id]');if(item)setDraft(item.dataset.bulkId,item.value);
+});
 document.addEventListener('click',e=>{
  const m=e.target.closest('[data-mode]');if(m){selectMode(m.dataset.mode);return}
  const add=e.target.closest('[data-add]');if(add){addSingle(add.dataset.add);return}
