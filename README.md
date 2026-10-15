@@ -208,3 +208,18 @@ Layout based on official Airレジ, Square POS, Shopify POS, and Loyverse workfl
 - POS APIs and inventory transactions remain from Stage 3C and require staff authentication. Sales on this development preview deduct **shared demo** inventory; payment collection itself is still external/manual. Earlier demos have not been modified.
 - Tests: Node vm POS interface checks, live inventory API tests including multiplication for 10 bouquets, Stage 3B regression and Cloudflare mobile browser inspections.
 - Actual login with a specific staff account, live card payments, receipt printing and fiscal workflows require separate end-to-end/production validation.
+
+## Stage 4 — Installable Staff PWA
+
+Preview: https://flower-shop-stage4-pwa-demo.rgmgmt05.workers.dev/pos
+
+- One installable staff app, starting on the register `/pos`. The same app's navigation opens staff inventory and order management at `/staff`.
+- Manifest: `public/staff.webmanifest`, application id `/take-you-staff`, scope `/`, display `standalone`, shortcuts for the POS and management screen.
+- Device icon: PNG 192×192 and 512×512 (`public/icons/`); neutral provisional Take you identity.
+- Registration/UI: `public/staff-pwa.js`. Android browsers supporting `beforeinstallprompt` display an "アプリ追加" action. For iOS/iPadOS Safari, "アプリ追加" shows instructions for the Share menu > Add to Home Screen. Updates require explicit user action.
+- Service Worker: `public/staff-sw.js`. Only *static shells, icon, CSS, JS, manifest* are cached for quick/offline interface loading. **No `/api/*` request or POST transaction is intercepted or cached**. The cashier must be online to authenticate, receive payment confirmation outside the app, and register a transaction in D1. An offline warning is displayed in both staff views.
+- Public customer ecommerce `/` does not register the staff PWA nor advertise this staff manifest. Service Worker has scope `/` to keep register and management in the **same** installed app; it bypasses customer routes.
+- HTTPS Workers route provides the Web Manifest as `application/manifest+json`, SW as JavaScript, and icons as binary PNG. Preview live checks confirmed manifest, both icon sizes and SW active at root scope.
+- Existing demo users and D1 inventory are shared with Stage 3C; staff registration/login remains required. This is a demo with **no integrated real payment, refunds, accounting, or offline selling**.
+- Automated tests: `node tests/test-stage4.mjs`; workflow `stage4-staff-pwa.yml`; prior cashier / inventory suites continue.
+- This is an **installable web app** and not a native Android/iOS app-store package.
