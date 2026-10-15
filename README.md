@@ -172,3 +172,15 @@ Deployed at: https://flower-shop-stage3b-demo.rgmgmt05.workers.dev/
 - Browser smoke checks verified 390px mobile header 82px, hero 844px, client page has no staff nav, six catalog products are returned and rendered, `/staff` serves a distinct management HTML.
 - Not production ready: full authentication security, email verification, real customer data handling, payment provider integration and notifications are pending. The video background is currently a static placeholder.
 
+
+## Stage 3C — staff POS, same system with a separate cashier UI
+
+- Customer site: `/`; inventory/order admin: `/staff`; cashier: `/pos`.
+- One Cloudflare Worker and one shared D1 database. The cashier and management pages are distinct workflows, not independent inventory systems.
+- Cashier supports loose flowers by SKU/quantity, and ad-hoc bouquets by flower SKUs/quantities with an **independent manually entered sale price**. Wrap choice is stored in the bouquet receipt.
+- An entire sale (receipt, each SKU stock decrement, and correlated movement records) is committed in a single D1 `batch()` transaction. Invalid/insufficient stock rolls it back. A unique `request_id` makes retries idempotent.
+- Cash and externally verified payments are manually marked confirmed by staff. This does not collect or process payment with a provider.
+- Stage 3C adds `migrations/0005_pos.sql`; `public/pos.html`, `public/pos.css`, `public/pos.js`. Staff APIs `GET/POST /api/pos/sales` require staff role.
+- Test data are shared with the previous stages; demo sale *actually reduces the demo inventory*. Never use the production shop's real amounts or customer details.
+- Pre-assembled bouquets that consumed inventory before sale will need their own "prepare finished goods" flow: do not subtract the constituent flowers again at POS. This first POS model covers bouquets assembled at the time of checkout and loose flowers.
+- Before real use: cash received/change, receipts and tax configuration, refunds/void, end-of-day closure, accounting exports, offline mode, production-grade staff identity, and optional card-terminal integration remain unimplemented.
