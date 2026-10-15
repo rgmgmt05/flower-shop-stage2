@@ -1,0 +1,24 @@
+name: Stage 4 staff PWA
+on:
+  push:
+    branches:
+      - stage4/staff-pwa
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check public/pos.js
+      - run: node --check public/staff-pwa.js
+      - run: node --check public/staff-sw.js
+      - run: node --experimental-sqlite tests/test-api.mjs
+      - run: node tests/test-stage3b.mjs
+      - run: node tests/test-pos.mjs
+      - run: node tests/test-stage4.mjs
