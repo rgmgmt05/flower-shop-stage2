@@ -213,15 +213,22 @@ function setPartQty(id,qty,preserve=false){
 function adjustPart(id,delta){
  const n=parts[id]||0;if(!setPartQty(id,n+delta))notice('使用本数を確認してください');
 }
+function flowerThumb(p){
+ return '<span class="flower-thumb">'+(p.imageId
+  ?'<img loading="lazy" src="/api/media/'+encodeURIComponent(p.imageId)+'" alt="" onerror="this.parentElement.textContent=\'写真未登録\'">'
+  :'写真未登録')+'</span>';
+}
 function renderParts(){
  $('bouquet-parts').innerHTML=catalog.products.filter(p=>p.active).map(p=>{
   const n=parts[p.id]||0;
-  return '<div class="bouquet-row"><div class="part-name"><strong>'+esc(p.name)+'</strong><small>'+yen(p.price)+' / 本 · 在庫 '+p.stock+'</small></div>'+
+  const details=(p.type?esc(p.type)+' · ':'')+yen(p.price)+' / 本 · 在庫 '+p.stock;
+  return '<div class="bouquet-row">'+flowerThumb(p)+'<div class="part-name"><strong>'+esc(p.name)+'</strong><small>'+details+'</small></div>'+
   '<div class="bouquet-step"><button type="button" data-part="'+esc(p.id)+'" data-delta="-1" aria-label="'+esc(p.name)+'を減らす">−</button>'+
   '<input aria-label="'+esc(p.name)+'の使用本数" data-part-qty="'+esc(p.id)+'" type="number" min="0" max="'+Math.min(999,p.stock)+'" inputmode="numeric" step="1" value="'+n+'">'+
   '<button type="button" data-part="'+esc(p.id)+'" data-delta="1" '+(n>=p.stock?'disabled':'')+' aria-label="'+esc(p.name)+'を増やす">＋</button></div></div>';
  }).join('');
 }
+
 function suggestedPrice(){
  return Object.entries(parts).reduce((n,[id,q])=>n+(prod(id)?.price||0)*q,0)+500+(getWrap($('wrap-id').value)?.price||0);
 }
