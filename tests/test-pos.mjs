@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const pos=fs.readFileSync(new URL('../public/pos.html',import.meta.url),'utf8');
+const script=fs.readFileSync(new URL('../public/pos.js',import.meta.url),'utf8');
+const staff=fs.readFileSync(new URL('../public/staff.html',import.meta.url),'utf8');
+const worker=fs.readFileSync(new URL('../src/worker.js',import.meta.url),'utf8');
+new vm.Script(script);
+assert.ok(pos.includes('id="bouquet-price"'),'custom bouquet needs independent sale price');
+assert.ok(pos.includes('id="bouquet-parts"'),'materials must be explicitly accounted for');
+assert.ok(pos.includes('id="checkout"'),'cash register is complete');
+assert.ok(staff.includes('href="/pos"'),'POS navigation must be staff-facing');
+assert.ok(!fs.readFileSync(new URL('../public/index.html',import.meta.url),'utf8').includes('href="/pos"'),'public customers should not see register link');
+assert.ok(worker.includes("actor?.role!=='staff'"),'POS API authorization must be staff only');
+assert.ok(worker.includes("await db.batch(statements)"),'POS materials must be deducted transactionally');
+assert.ok(worker.includes('request_id=?'),'repeated requests must be idempotent');
+console.log('PASS: POS screen, staff separation, valid JavaScript and required backend hooks');
