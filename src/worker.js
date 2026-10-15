@@ -341,7 +341,7 @@ async function completePosSale(db,actor,v){
  const demand=new Map(),items=[];
  let total=0;
  const consume=(id,qty)=>{
-  if(typeof id!=='string'||!Number.isInteger(qty)||qty<1||qty>999)throw new Error('花材の本数を確認してください');
+  if(typeof id!=='string'||!Number.isSafeInteger(qty)||qty<1||qty>999999)throw new Error('花材の本数を確認してください');
   const p=byProduct.get(id);if(!p||!p.active)throw new Error('販売可能な花材を選択してください');
   demand.set(id,(demand.get(id)||0)+qty);
   return p;
