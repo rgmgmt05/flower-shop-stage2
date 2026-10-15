@@ -3,7 +3,12 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const yen=v=>'¥'+Number(v||0).toLocaleString('ja-JP');
 let catalog={products:[],wraps:[]},cart=[],parts={},user=null;
-let mode='favorites',preset=1,pendingId=crypto.randomUUID(),processing=false,favorites=new Set(),cartOpen=false;
+let mode='favorites',preset=1,pendingId=crypto.randomUUID(),processing=false,favorites=new Set(),cartOpen=false,lastAction='—';
+function setLastAction(value){
+ lastAction=String(value);
+ $('last-action').textContent='直近：'+lastAction;
+ $('mobile-last-action').textContent='直近：'+lastAction;
+}
 const prod=id=>catalog.products.find(p=>p.id===id);
 const getWrap=id=>catalog.wraps.find(w=>w.id===id);
 async function request(path,method='GET',body){
@@ -94,10 +99,13 @@ function addSingle(id,qty=preset){
  const issue=validateCart(next);
  if(issue)return notice(issue);
  cart=next;afterCartChange();
+ setLastAction(p.name+' +'+qty+'本 · '+yen(p.price*qty));
 }
 function updateLineQty(index,raw,updateInput=false){
  const line=cart[index],n=Number(raw);
  if(!line||String(raw).trim()===''||!Number.isInteger(n)||n<1||n>999)return false;
+ if(line.qty===n)return true;
+ const title=line.kind==='single'?(prod(line.id)?.name||'商品'):'花束';
  const next=cart.map(x=>({...x}));
  next[index].qty=n;
  const issue=validateCart(next);
@@ -107,11 +115,13 @@ function updateLineQty(index,raw,updateInput=false){
  updateTotals();renderProducts();
  const value=$('line-total-'+index);if(value)value.textContent=yen(lineTotal(cart[index]));
  if(!updateInput)renderCart();
+ setLastAction(title+' '+n+(line.kind==='single'?'本':'点')+'に変更');
  return true;
 }
 function removeLine(i){
  if(i<0||i>=cart.length)return;
- cart.splice(i,1);afterCartChange();
+ const line=cart[i],name=line.kind==='single'?(prod(line.id)?.name||'商品'):'花束';
+ cart.splice(i,1);afterCartChange();setLastAction(name+' '+line.qty+(line.kind==='single'?'本':'点')+'を削除');
 }
 function setPreset(raw){
  const n=Number(raw);
@@ -201,7 +211,7 @@ function addBouquet(){
  const issue=validateCart(next);if(issue)return notice(issue);
  if(next.reduce((n,line)=>n+lineTotal(line),0)>10000000)return notice('1会計の上限額を超えています');
  cart=next;parts={};$('bouquet-price').value='';$('bouquet-quantity').value='1';
- afterCartChange();renderParts();renderBouquetSubtotal();openCart();
+ afterCartChange();setLastAction('花束 +'+qty+'点 · '+yen(price*qty));renderParts();renderBouquetSubtotal();openCart();
 }
 function renderCart(){
  $('lines').innerHTML=cart.map((line,i)=>{
@@ -251,7 +261,7 @@ function closeCart(){
  $('view-cart').setAttribute('aria-expanded','false');
 }
 function clearCart(){
- cart=[];pendingId=crypto.randomUUID();$('receipt').hidden=true;renderCart();renderProducts();
+ cart=[];pendingId=crypto.randomUUID();$('receipt').hidden=true;renderCart();renderProducts();setLastAction('会計をクリア');
 }
 async function checkout(){
  if(!user||user.role!=='staff'||processing||cart.length===0)return;
@@ -261,6 +271,7 @@ async function checkout(){
  try{
   const result=await request('/api/pos/sales','POST',{requestId:pendingId,paymentMethod:method,lines:cart});
   cart=[];parts={};pendingId=crypto.randomUUID();
+  setLastAction('会計確定 · '+yen(result.total));
   $('receipt').textContent='会計完了 · '+result.id.slice(0,8)+' · '+yen(result.total)+(result.alreadyProcessed?'（再送確認）':'');
   $('receipt').hidden=false;
   try{catalog=await request('/api/catalog')}catch(e){notice('会計は保存しました。商品情報の更新に失敗しました')}
@@ -276,7 +287,7 @@ async function fetchSales(){
 }
 $('login-form').addEventListener('submit',e=>{e.preventDefault();login()});
 $('signout').addEventListener('click',async()=>{
- try{await request('/api/auth/logout','POST',{});user=null;cart=[];parts={};showAuth()}catch(e){notice(e.message)}
+ try{await request('/api/auth/logout','POST',{});user=null;cart=[];parts={};setLastAction('—');showAuth()}catch(e){notice(e.message)}
 });
 $('filter').addEventListener('input',renderProducts);
 $('quick-qty').addEventListener('change',e=>{
