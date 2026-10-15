@@ -297,6 +297,7 @@ export default {
   async fetch(request,env){
     const url=new URL(request.url),path=url.pathname;
     if(!path.startsWith('/api/')){
+      if((path==='/pos'||path==='/pos/')&&(['GET','HEAD'].includes(request.method))){const posUrl=new URL('/pos.html',url);return env.ASSETS.fetch(new Request(posUrl,request));}
       if((path==='/staff'||path==='/staff/')&&(['GET','HEAD'].includes(request.method))){
         const staffUrl=new URL('/staff.html',url);
         return env.ASSETS.fetch(new Request(staffUrl,request));
@@ -325,8 +326,64 @@ export default {
         if(!actor)await requireDemo(request,env); // Guest checkout is invitation-only during the demo.
         return response(await demoCheckout(env.DB,await input(request),actor?.role==='customer'?actor.id:null),201);
       }
+      // POS: one shared inventory and immutable receipt per checkout.
+async function posSales(db){
+ const {results}=await db.prepare('SELECT id,created_at AS createdAt,payment_method AS paymentMethod,total,lines_json AS linesJson FROM pos_sales ORDER BY rowid DESC LIMIT 50').all();
+ return {sales:results.map(s=>({id:s.id,createdAt:s.createdAt,paymentMethod:s.paymentMethod,total:s.total,lines:JSON.parse(s.linesJson)}))};
+}
+async function completePosSale(db,actor,v){
+ const requestId=String(v?.requestId||'');
+ if(!/^[a-f0-9-]{36}$/.test(requestId))throw new Error('会計IDを確認してください');
+ const prev=await db.prepare('SELECT id,total FROM pos_sales WHERE request_id=?').bind(requestId).first();
+ if(prev)return {ok:true,id:prev.id,total:prev.total,alreadyProcessed:true};
+ if(!['cash','external'].includes(v?.paymentMethod)||!Array.isArray(v?.lines)||!v.lines.length||v.lines.length>40)throw new Error('会計内容を確認してください');
+ const c=await catalog(db),byProduct=new Map(c.products.map(p=>[p.id,p])),byWrap=new Map(c.wraps.map(w=>[w.id,w]));
+ const demand=new Map(),items=[];
+ let total=0;
+ const consume=(id,qty)=>{
+  if(typeof id!=='string'||!Number.isInteger(qty)||qty<1||qty>999)throw new Error('花材の本数を確認してください');
+  const p=byProduct.get(id);if(!p||!p.active)throw new Error('販売可能な花材を選択してください');
+  demand.set(id,(demand.get(id)||0)+qty);
+  return p;
+ };
+ for(const line of v.lines){
+  if(line?.kind==='single'){
+   const p=consume(line.id,line.qty);
+   const amount=p.price*line.qty;
+   total+=amount;items.push({kind:'single',title:p.name,qty:line.qty,unitPrice:p.price,total:amount,parts:[{id:p.id,qty:line.qty}]});
+  }else if(line?.kind==='bouquet'){
+   if(!Array.isArray(line.parts)||!line.parts.length||line.parts.length>60||!Number.isInteger(line.price)||line.price<0||line.price>10000000)throw new Error('花束の価格・花材を確認してください');
+   if(line.wrapId!=null&&!byWrap.has(line.wrapId))throw new Error('包装を確認してください');
+   const parts=line.parts.map(x=>{const p=consume(x.id,x.qty);return {id:p.id,name:p.name,qty:x.qty}});
+   total+=line.price;items.push({kind:'bouquet',title:'花束',qty:1,total:line.price,wrapId:line.wrapId||null,parts});
+  }else throw new Error('商品形式を確認してください');
+ }
+ if(total>10000000)throw new Error('会計金額の上限を超えています');
+ for(const [id,qty] of demand){if(byProduct.get(id).stock<qty)throw authError(byProduct.get(id).name+'の在庫が不足しています',409)}
+ const id=crypto.randomUUID();
+ const statements=[
+  db.prepare('INSERT INTO pos_sales(id,request_id,staff_id,payment_method,total,lines_json,demand_json) VALUES(?,?,?,?,?,?,?)')
+    .bind(id,requestId,actor.id,v.paymentMethod,total,JSON.stringify(items),JSON.stringify(Object.fromEntries(demand)))
+ ];
+ for(const [pid,qty] of demand){
+  // Stock CHECK constraints and inactive-stock trigger abort the whole batch if concurrency changes availability.
+  statements.push(db.prepare('UPDATE products SET stock=stock-? WHERE id=? AND active=1').bind(qty,pid));
+  statements.push(db.prepare('INSERT INTO movements(product_id,delta,reason,pos_sale_id) VALUES(?,?,?,?)').bind(pid,-qty,'レジ販売',id));
+ }
+ try{await db.batch(statements)}
+ catch(e){
+  const prior=await db.prepare('SELECT id,total FROM pos_sales WHERE request_id=?').bind(requestId).first();
+  if(prior)return {ok:true,id:prior.id,total:prior.total,alreadyProcessed:true};
+  if(/constraint|SALE_DISABLED|INSUFFICIENT_STOCK|UNIQUE/i.test(String(e.message)))throw authError('在庫不足か、同時会計による競合です。内容を再確認してください',409);
+  throw e;
+ }
+ return {ok:true,id,total,alreadyProcessed:false};
+}
+
       // Only individual staff sessions may use stock, media, and order management.
       if(actor?.role!=='staff')throw authError('スタッフのログインが必要です',403);
+      if(path==='/api/pos/sales'&&request.method==='GET')return response(await posSales(env.DB));
+      if(path==='/api/pos/sales'&&request.method==='POST')return response(await completePosSale(env.DB,actor,await input(request)),201);
       if(path==='/api/admin/state'&&request.method==='GET')return response(await adminState(env.DB));
       if(path==='/api/admin/media'&&request.method==='POST')return response(await uploadMedia(request,env),201);
       if(path==='/api/admin/templates'&&request.method==='POST')return response(await saveTemplate(env.DB,await input(request)),201);
