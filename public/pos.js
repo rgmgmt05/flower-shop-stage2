@@ -214,10 +214,13 @@ function adjustPart(id,delta){
  const n=parts[id]||0;if(!setPartQty(id,n+delta))notice('使用本数を確認してください');
 }
 function flowerThumb(p){
- return '<span class="flower-thumb">'+(p.imageId
-  ?'<img loading="lazy" src="/api/media/'+encodeURIComponent(p.imageId)+'" alt="" onerror="this.parentElement.textContent=\'写真未登録\'">'
-  :'写真未登録')+'</span>';
+ const tone=['coral','white','yellow','lilac','green'].includes(p.tone)?p.tone:'neutral';
+ const icon='<span class="thumb-symbol" aria-label="写真未登録">'+esc(p.icon||'✿')+'</span>';
+ return '<span class="flower-thumb tone-'+tone+'">'+(p.imageId
+  ?'<img loading="lazy" src="/api/media/'+encodeURIComponent(p.imageId)+'" alt="" onerror="this.remove()">'
+  :'')+icon+'</span>';
 }
+
 function renderParts(){
  $('bouquet-parts').innerHTML=catalog.products.filter(p=>p.active).map(p=>{
   const n=parts[p.id]||0;
