@@ -217,7 +217,16 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function product(id){return state.products.find(p=>p.id===id)}
 function wrap(id){return state.wraps.find(w=>w.id===id)}
 function toast(msg){const e=document.getElementById('toast');e.textContent=msg;e.style.display='block';clearTimeout(window.__toast);window.__toast=setTimeout(()=>e.style.display='none',2800)}
-function navigate(next){page=next;document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='view-'+next));document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===next));window.scrollTo(0,0);render()}
+function navigate(next){
+ page=next;
+ document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id==='view-'+next));
+ const management=document.querySelector('.staff-main-link[href="/staff"]');
+ const account=document.querySelector('.staff-account-link');
+ const onAccount=next==='account';
+ if(management){management.classList.toggle('is-active',!onAccount);if(onAccount)management.removeAttribute('aria-current');else management.setAttribute('aria-current','page')}
+ if(account){account.classList.toggle('is-active',onAccount);if(onAccount)account.setAttribute('aria-current','page');else account.removeAttribute('aria-current')}
+ window.scrollTo(0,0);render();
+}
 function render(){const logout=document.getElementById('signout');if(logout)logout.hidden=authUser?.role!=='staff';const count=document.getElementById('cart-count');if(count)count.textContent=cart.length;renderShop();renderExamples();renderBuilder();renderCart();renderAdmin();renderAccount();const box=document.getElementById('guest-key-box');if(box)box.style.display=authUser?'none':'grid'}
 function renderShop(){document.getElementById('product-grid').innerHTML=state.products.filter(p=>p.active).map(p=>`<div class="card"><div class="flower-img ${p.imageId?'photo':esc(p.tone)}">${p.imageId?`<img loading="lazy" src="${photoOf(p.imageId)}" alt="${esc(p.name)}" />`:esc(p.icon)}</div><div class="card-body"><span class="meta">${esc(p.type)}</span><h3 style="margin:7px 0">${esc(p.name)}</h3><div class="flex"><span class="price">${money(p.price)} <small>/本</small></span><span class="tag ${p.stock===0?'warn':''}">残 ${p.stock}</span></div><div class="action-row"><button class="secondary small" ${p.stock===0?'disabled':''} onclick="addSingle('${p.id}')">1本カートへ追加</button></div></div></div>`).join('')||'<div class="empty">販売中の商品がありません。</div>'}
 function renderExamples(){
@@ -347,7 +356,7 @@ async function cancelOrder(id){
 }
 async function resetDemo(){toast('データ初期化はこの版では提供していません')}
 const initialView=new URLSearchParams(window.location.search).get('view');
-navigate('account');initializeAuth().then(()=>{if(authUser?.role==='staff'&&initialView!=='account')navigate('admin');if(initialView==='account'){document.querySelector('.staff-account-link')?.classList.add('is-active');document.querySelector('.staff-main-link[href="/staff"]')?.classList.remove('is-active')}});
+navigate('account');initializeAuth().then(()=>{if(authUser?.role==='staff'&&initialView!=='account')navigate('admin');if(initialView==='account')navigate('account')});
 document.getElementById('signout').addEventListener('click',logoutAccount);
 </script>
 <script src="/staff-pwa.js" defer></script>
